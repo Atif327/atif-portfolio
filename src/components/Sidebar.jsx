@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { FaHome, FaUser, FaServicestack, FaEnvelope, FaTimes, FaBars } from 'react-icons/fa'
+import { FaHome, FaUser, FaServicestack, FaEnvelope, FaTimes, FaBars, FaNewspaper } from 'react-icons/fa'
 
 const items = [
   { id: 'home', label: 'Home', icon: FaHome },
   { id: 'about', label: 'About', icon: FaUser },
   { id: 'services', label: 'Services', icon: FaServicestack },
+  { id: 'news', label: 'News', icon: FaNewspaper },
   { id: 'contact', label: 'Contact', icon: FaEnvelope },
 ]
 

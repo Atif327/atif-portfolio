@@ -5,6 +5,7 @@ import AnimatedBg from './components/AnimatedBg'
 import Home from './pages/Home'
 import About from './pages/About'
 import Services from './pages/Services'
+import News from './pages/News'
 import Contact from './pages/Contact'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -15,6 +16,7 @@ export default function App(){
       case 'home': return <Home />
       case 'about': return <About />
       case 'services': return <Services />
+      case 'news': return <News />
       case 'contact': return <Contact />
       default: return <Home />
     }
