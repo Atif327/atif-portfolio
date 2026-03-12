@@ -125,7 +125,7 @@ export default function News(){
         }
       }
 
-      const finalList = merged.filter(it => it.image && String(it.image).trim() !== '')
+      const finalList = merged
       setItems(finalList)
       if(shouldPersist) void persistItems(finalList)
     }
@@ -178,7 +178,7 @@ export default function News(){
                 description: pick(it,'description') || '',
                 url: pick(it,'url','link','permalink') || '#'
               }))
-              setItems(mapped.filter(it => it.image && String(it.image).trim() !== ''))
+              setItems(mapped)
             })
             .catch(e => { console.error('mock-news.json fetch also failed', e); setItems([]) })
         }

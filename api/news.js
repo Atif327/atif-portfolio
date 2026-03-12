@@ -185,7 +185,7 @@ export default async function handler(req, res) {
       if (result.status !== 'fulfilled' || !Array.isArray(result.value)) continue
       for (const item of result.value) {
         const key = item.url || item.title
-        if (!item.image || !String(item.image).trim() || seen.has(key)) continue
+        if (seen.has(key)) continue
         seen.add(key)
         merged.push(item)
       }
