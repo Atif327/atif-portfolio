@@ -112,7 +112,7 @@ export default function News(){
       }
     }
 
-    const applyResults = (successLists) => {
+    const applyResults = (successLists, shouldPersist = true) => {
       if(!mounted) return
       const merged = []
       const seen = new Set()
@@ -127,7 +127,7 @@ export default function News(){
 
       const finalList = merged.filter(it => it.image && String(it.image).trim() !== '')
       setItems(finalList)
-      void persistItems(finalList)
+      if(shouldPersist) void persistItems(finalList)
     }
 
     fetch(serverNewsUrl)
@@ -138,7 +138,7 @@ export default function News(){
       .then(json => {
         const items = Array.isArray(json?.items) ? json.items : []
         if(items.length) {
-          applyResults([items])
+          applyResults([items], false)
           return null
         }
 
