@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom'
 export default function Home(){
   const navigate = useNavigate()
   const { settings, sortedSocialLinks, sortedServices, sortedProjects } = usePortfolioData()
+  const resumeUrl = settings.resumeLink?.trim() || '/Atif CV.pdf'
+  const isLocalResume = resumeUrl.startsWith('/')
   const publicSocialLinks = sortedSocialLinks.filter((link) => link.isActive)
   const servicesPreview = useMemo(() => sortedServices.filter((service) => service.isActive).slice(0, 3), [sortedServices])
   const featuredProjects = useMemo(() => sortedProjects.filter((project) => project.isActive).slice(0, 3), [sortedProjects])
@@ -65,7 +67,15 @@ export default function Home(){
             <p className="home-hero-description">{settings.heroSubtitle || 'Building elegant products with modern design, strong engineering, and performance-first delivery.'}</p>
 
             <div className="home-hero-actions">
-              <a className="home-btn-primary" href={settings.resumeLink || '#'} target={settings.resumeLink ? '_blank' : undefined} rel="noreferrer">Download Resume</a>
+              <a
+                className="home-btn-primary"
+                href={resumeUrl}
+                target={isLocalResume ? undefined : '_blank'}
+                rel={isLocalResume ? undefined : 'noreferrer'}
+                download={isLocalResume ? 'Atif CV.pdf' : undefined}
+              >
+                Download Resume
+              </a>
               <button className="home-btn-secondary" onClick={() => navigate('/contact')}>Contact Me</button>
             </div>
           </div>
