@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DEFAULT_MESSAGES,
   DEFAULT_PROJECTS,
@@ -195,6 +195,21 @@ export function PortfolioDataProvider({ children }) {
     isActive: Boolean(row.is_active),
     displayOrder: toNumber(row.display_order, 0),
   })
+
+  const refreshMessages = useCallback(async () => {
+    if (!hasSupabase) return
+
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .select('id, full_name, email, subject, message, submitted_at, is_read')
+      .order('submitted_at', { ascending: false })
+
+    if (error) throw error
+
+    const mappedMessages = Array.isArray(data) ? data.map(mapDbMessageToApp) : []
+    setMessages(mappedMessages)
+    persist(STORAGE_KEYS.messages, mappedMessages)
+  }, [hasSupabase])
 
   useEffect(() => {
     if (!hasSupabase) return
@@ -614,9 +629,29 @@ export function PortfolioDataProvider({ children }) {
       addMessage,
       updateMessageStatus,
       deleteMessage,
+      refreshMessages,
       resetAllData,
     }),
-    [messages, projects, services, settings, socialLinks, sortedProjects, sortedServices, sortedSocialLinks],
+    [
+      deleteMessage,
+      deleteProject,
+      deleteService,
+      deleteSocialLink,
+      messages,
+      projects,
+      refreshMessages,
+      services,
+      settings,
+      socialLinks,
+      sortedProjects,
+      sortedServices,
+      sortedSocialLinks,
+      updateMessageStatus,
+      updateSettings,
+      upsertProject,
+      upsertService,
+      upsertSocialLink,
+    ],
   )
 
   return <PortfolioDataContext.Provider value={value}>{children}</PortfolioDataContext.Provider>

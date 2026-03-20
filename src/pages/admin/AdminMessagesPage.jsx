@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import ConfirmModal from '../../components/admin/shared/ConfirmModal'
 import StatusBadge from '../../components/admin/shared/StatusBadge'
 import { usePortfolioData } from '../../context/PortfolioDataContext'
 
 export default function AdminMessagesPage() {
-  const { messages, deleteMessage, updateMessageStatus } = usePortfolioData()
+  const { messages, deleteMessage, updateMessageStatus, refreshMessages } = usePortfolioData()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -17,6 +17,12 @@ export default function AdminMessagesPage() {
       return text.includes(query.toLowerCase())
     })
   }, [messages, query])
+
+  useEffect(() => {
+    refreshMessages().catch(() => {
+      setActionError('Unable to load messages right now. Please refresh and try again.')
+    })
+  }, [refreshMessages])
 
   const onDelete = async () => {
     if (!deleteTarget?.id) return
