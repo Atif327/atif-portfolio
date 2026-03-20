@@ -69,7 +69,7 @@ export default function AdminServicesPage() {
     setError('')
   }
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault()
     setError('')
     setSuccess('')
@@ -80,17 +80,26 @@ export default function AdminServicesPage() {
     if (!form.rate.trim()) return setError('Price / rate is required.')
     if (Number.isNaN(Number(form.displayOrder))) return setError('Display order must be numeric.')
 
-    upsertService(form, editing?.id)
-    setSuccess(editing ? 'Service updated successfully.' : 'Service created successfully.')
-    onReset()
-    setIsFormOpen(false)
+    try {
+      await upsertService(form, editing?.id)
+      setSuccess(editing ? 'Service updated successfully.' : 'Service created successfully.')
+      onReset()
+      setIsFormOpen(false)
+    } catch {
+      setError('Unable to save service right now. Please try again.')
+    }
   }
 
-  const onConfirmDelete = () => {
-    deleteService(deleteTarget.id)
-    setDeleteTarget(null)
-    setSuccess('Service deleted successfully.')
-    if (editing?.id === deleteTarget.id) onReset()
+  const onConfirmDelete = async () => {
+    if (!deleteTarget?.id) return
+    try {
+      await deleteService(deleteTarget.id)
+      setDeleteTarget(null)
+      setSuccess('Service deleted successfully.')
+      if (editing?.id === deleteTarget.id) onReset()
+    } catch {
+      setError('Unable to delete service right now. Please try again.')
+    }
   }
 
   return (
@@ -154,18 +163,28 @@ export default function AdminServicesPage() {
                         <div className="admin-service-menu-content">
                           <button
                             className="admin-service-menu-item"
-                            onClick={() => {
-                              upsertService({ ...service, isActive: !service.isActive }, service.id)
-                              setSuccess('Service status updated.')
+                            onClick={async () => {
+                              setError('')
+                              try {
+                                await upsertService({ ...service, isActive: !service.isActive }, service.id)
+                                setSuccess('Service status updated.')
+                              } catch {
+                                setError('Unable to update service status right now. Please try again.')
+                              }
                             }}
                           >
                             {service.isActive ? 'Set Inactive' : 'Set Active'}
                           </button>
                           <button
                             className="admin-service-menu-item"
-                            onClick={() => {
-                              upsertService({ ...service, featured: !service.featured }, service.id)
-                              setSuccess('Service featured flag updated.')
+                            onClick={async () => {
+                              setError('')
+                              try {
+                                await upsertService({ ...service, featured: !service.featured }, service.id)
+                                setSuccess('Service featured flag updated.')
+                              } catch {
+                                setError('Unable to update featured flag right now. Please try again.')
+                              }
                             }}
                           >
                             {service.featured ? 'Remove Featured' : 'Set Featured'}

@@ -136,7 +136,7 @@ export default function AdminProjectsPage() {
     setError('')
   }
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault()
     setError('')
     setSuccess('')
@@ -150,24 +150,33 @@ export default function AdminProjectsPage() {
     if (!isValidUrl(form.githubUrl)) return setError('GitHub/source URL must be valid.')
     if (Number.isNaN(Number(form.displayOrder))) return setError('Display order must be numeric.')
 
-    upsertProject(
-      {
-        ...form,
-        technologies: form.technologies,
-        galleryImages: form.galleryImages || [],
-      },
-      editing?.id,
-    )
-    setSuccess(editing ? 'Project updated successfully.' : 'Project created successfully.')
-    onReset()
-    setIsFormOpen(false)
+    try {
+      await upsertProject(
+        {
+          ...form,
+          technologies: form.technologies,
+          galleryImages: form.galleryImages || [],
+        },
+        editing?.id,
+      )
+      setSuccess(editing ? 'Project updated successfully.' : 'Project created successfully.')
+      onReset()
+      setIsFormOpen(false)
+    } catch {
+      setError('Unable to save project right now. Please try again.')
+    }
   }
 
-  const onConfirmDelete = () => {
-    deleteProject(deleteTarget.id)
-    setDeleteTarget(null)
-    setSuccess('Project deleted successfully.')
-    if (editing?.id === deleteTarget.id) onReset()
+  const onConfirmDelete = async () => {
+    if (!deleteTarget?.id) return
+    try {
+      await deleteProject(deleteTarget.id)
+      setDeleteTarget(null)
+      setSuccess('Project deleted successfully.')
+      if (editing?.id === deleteTarget.id) onReset()
+    } catch {
+      setError('Unable to delete project right now. Please try again.')
+    }
   }
 
   return (
@@ -232,18 +241,28 @@ export default function AdminProjectsPage() {
                         <div className="admin-project-menu-content">
                           <button
                             className="admin-project-menu-item"
-                            onClick={() => {
-                              upsertProject({ ...project, isActive: !project.isActive }, project.id)
-                              setSuccess('Project status updated.')
+                            onClick={async () => {
+                              setError('')
+                              try {
+                                await upsertProject({ ...project, isActive: !project.isActive }, project.id)
+                                setSuccess('Project status updated.')
+                              } catch {
+                                setError('Unable to update project status right now. Please try again.')
+                              }
                             }}
                           >
                             {project.isActive ? 'Set Inactive' : 'Set Active'}
                           </button>
                           <button
                             className="admin-project-menu-item"
-                            onClick={() => {
-                              upsertProject({ ...project, featured: !project.featured }, project.id)
-                              setSuccess('Project featured flag updated.')
+                            onClick={async () => {
+                              setError('')
+                              try {
+                                await upsertProject({ ...project, featured: !project.featured }, project.id)
+                                setSuccess('Project featured flag updated.')
+                              } catch {
+                                setError('Unable to update featured flag right now. Please try again.')
+                              }
                             }}
                           >
                             {project.featured ? 'Remove Featured' : 'Set Featured'}

@@ -35,7 +35,7 @@ export default function AdminSocialLinksPage() {
     return [...socialLinks].sort((a, b) => Number(a.displayOrder) - Number(b.displayOrder))
   }, [socialLinks])
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault()
     setError('')
     setSuccess('')
@@ -43,10 +43,14 @@ export default function AdminSocialLinksPage() {
     if (!form.platform.trim()) return setError('Platform name is required.')
     if (!isValidUrl(form.url)) return setError('Valid URL is required.')
 
-    upsertSocialLink(form, editing?.id)
-    setSuccess(editing ? 'Social link updated successfully.' : 'Social link added successfully.')
-    setEditing(null)
-    setForm(emptyForm)
+    try {
+      await upsertSocialLink(form, editing?.id)
+      setSuccess(editing ? 'Social link updated successfully.' : 'Social link added successfully.')
+      setEditing(null)
+      setForm(emptyForm)
+    } catch {
+      setError('Unable to save social link right now. Please try again.')
+    }
   }
 
   const onEdit = (item) => {
@@ -75,7 +79,15 @@ export default function AdminSocialLinksPage() {
                 <div className="admin-entity-actions">
                   <button className="admin-entity-btn admin-entity-btn-edit" onClick={() => onEdit(item)}>Edit</button>
                   <button className="admin-entity-btn admin-entity-btn-delete" onClick={() => setDeleteTarget(item)}>Delete</button>
-                  <button className="admin-entity-btn admin-entity-btn-toggle" onClick={() => { upsertSocialLink({ ...item, isActive: !item.isActive }, item.id); setSuccess('Link status updated.') }}>Toggle Status</button>
+                  <button className="admin-entity-btn admin-entity-btn-toggle" onClick={async () => {
+                    setError('')
+                    try {
+                      await upsertSocialLink({ ...item, isActive: !item.isActive }, item.id)
+                      setSuccess('Link status updated.')
+                    } catch {
+                      setError('Unable to update link status right now. Please try again.')
+                    }
+                  }}>Toggle Status</button>
                 </div>
               </div>
             ))}
@@ -130,10 +142,15 @@ export default function AdminSocialLinksPage() {
         title="Delete Social Link"
         message={`Delete ${deleteTarget?.platform || 'this platform'} link?`}
         onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => {
-          deleteSocialLink(deleteTarget.id)
-          setDeleteTarget(null)
-          setSuccess('Social link deleted successfully.')
+        onConfirm={async () => {
+          if (!deleteTarget?.id) return
+          try {
+            await deleteSocialLink(deleteTarget.id)
+            setDeleteTarget(null)
+            setSuccess('Social link deleted successfully.')
+          } catch {
+            setError('Unable to delete social link right now. Please try again.')
+          }
         }}
       />
     </AdminLayout>

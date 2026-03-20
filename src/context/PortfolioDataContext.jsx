@@ -49,11 +49,31 @@ export function PortfolioDataProvider({ children }) {
   const [socialLinks, setSocialLinks] = useState(() => parseStoredValue(STORAGE_KEYS.socialLinks, DEFAULT_SOCIAL_LINKS))
   const [messages, setMessages] = useState(() => parseStoredValue(STORAGE_KEYS.messages, DEFAULT_MESSAGES))
   const hasSupabase = Boolean(supabase && typeof supabase.from === 'function')
+  const servicesRef = useRef(services)
+  const projectsRef = useRef(projects)
   const settingsRef = useRef(settings)
+  const socialLinksRef = useRef(socialLinks)
+  const messagesRef = useRef(messages)
+
+  useEffect(() => {
+    servicesRef.current = services
+  }, [services])
+
+  useEffect(() => {
+    projectsRef.current = projects
+  }, [projects])
 
   useEffect(() => {
     settingsRef.current = settings
   }, [settings])
+
+  useEffect(() => {
+    socialLinksRef.current = socialLinks
+  }, [socialLinks])
+
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
 
   const persist = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value))
@@ -69,18 +89,137 @@ export function PortfolioDataProvider({ children }) {
     isRead: Boolean(row.is_read),
   })
 
+  const mapAppServiceToDb = (item) => ({
+    id: item.id,
+    title: item.title,
+    short_description: item.shortDescription,
+    full_description: item.fullDescription,
+    icon: item.icon,
+    rate: item.rate,
+    category: item.category,
+    display_order: toNumber(item.displayOrder, 0),
+    is_active: Boolean(item.isActive),
+    featured: Boolean(item.featured),
+    created_at: item.createdAt || new Date().toISOString(),
+    updated_at: item.updatedAt || new Date().toISOString(),
+  })
+
+  const mapDbServiceToApp = (row) => ({
+    id: row.id,
+    title: sanitizeText(row.title),
+    shortDescription: sanitizeText(row.short_description),
+    fullDescription: sanitizeText(row.full_description),
+    icon: sanitizeText(row.icon),
+    rate: sanitizeText(row.rate),
+    category: sanitizeText(row.category),
+    displayOrder: toNumber(row.display_order, 0),
+    isActive: Boolean(row.is_active),
+    featured: Boolean(row.featured),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })
+
+  const mapAppProjectToDb = (item) => ({
+    id: item.id,
+    title: item.title,
+    short_description: item.shortDescription,
+    full_description: item.fullDescription,
+    thumbnail: item.thumbnail,
+    gallery_images: Array.isArray(item.galleryImages) ? item.galleryImages : [],
+    technologies: Array.isArray(item.technologies)
+      ? item.technologies
+      : String(item.technologies || '')
+          .split(',')
+          .map((tech) => sanitizeText(tech))
+          .filter(Boolean),
+    category: item.category,
+    live_url: item.liveUrl,
+    github_url: item.githubUrl,
+    case_study_url: item.caseStudyUrl,
+    project_status: item.projectStatus,
+    featured: Boolean(item.featured),
+    display_order: toNumber(item.displayOrder, 0),
+    is_active: Boolean(item.isActive),
+    start_date: item.startDate,
+    end_date: item.endDate,
+    client_name: item.clientName,
+    role: item.role,
+    highlights: item.highlights,
+    challenges_solutions: item.challengesSolutions,
+    created_at: item.createdAt || new Date().toISOString(),
+    updated_at: item.updatedAt || new Date().toISOString(),
+  })
+
+  const mapDbProjectToApp = (row) => ({
+    id: row.id,
+    title: sanitizeText(row.title),
+    shortDescription: sanitizeText(row.short_description),
+    fullDescription: sanitizeText(row.full_description),
+    thumbnail: sanitizeText(row.thumbnail),
+    galleryImages: Array.isArray(row.gallery_images) ? row.gallery_images.map((img) => sanitizeText(img)).filter(Boolean) : [],
+    technologies: Array.isArray(row.technologies) ? row.technologies.map((tech) => sanitizeText(tech)).filter(Boolean) : [],
+    category: sanitizeText(row.category),
+    liveUrl: sanitizeText(row.live_url),
+    githubUrl: sanitizeText(row.github_url),
+    caseStudyUrl: sanitizeText(row.case_study_url),
+    projectStatus: sanitizeText(row.project_status) || 'completed',
+    featured: Boolean(row.featured),
+    displayOrder: toNumber(row.display_order, 0),
+    isActive: Boolean(row.is_active),
+    startDate: sanitizeText(row.start_date),
+    endDate: sanitizeText(row.end_date),
+    clientName: sanitizeText(row.client_name),
+    role: sanitizeText(row.role),
+    highlights: sanitizeText(row.highlights),
+    challengesSolutions: sanitizeText(row.challenges_solutions),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })
+
+  const mapAppSocialLinkToDb = (item) => ({
+    id: item.id,
+    platform: item.platform,
+    url: item.url,
+    icon: item.icon,
+    is_active: Boolean(item.isActive),
+    display_order: toNumber(item.displayOrder, 0),
+    created_at: item.createdAt || new Date().toISOString(),
+    updated_at: item.updatedAt || new Date().toISOString(),
+  })
+
+  const mapDbSocialLinkToApp = (row) => ({
+    id: row.id,
+    platform: sanitizeText(row.platform),
+    url: sanitizeText(row.url),
+    icon: sanitizeText(row.icon),
+    isActive: Boolean(row.is_active),
+    displayOrder: toNumber(row.display_order, 0),
+  })
+
   useEffect(() => {
     if (!hasSupabase) return
 
     let isCancelled = false
 
     async function loadPersistentData() {
-      const [settingsResult, messagesResult] = await Promise.all([
+      const [settingsResult, messagesResult, servicesResult, projectsResult, socialLinksResult] = await Promise.all([
         supabase.from('app_settings').select('data').eq('id', 1).maybeSingle(),
         supabase
           .from('contact_messages')
           .select('id, full_name, email, subject, message, submitted_at, is_read')
           .order('submitted_at', { ascending: false }),
+        supabase
+          .from('portfolio_services')
+          .select('id, title, short_description, full_description, icon, rate, category, display_order, is_active, featured, created_at, updated_at')
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('portfolio_projects')
+          .select('id, title, short_description, full_description, thumbnail, gallery_images, technologies, category, live_url, github_url, case_study_url, project_status, featured, display_order, is_active, start_date, end_date, client_name, role, highlights, challenges_solutions, created_at, updated_at')
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('social_links')
+          .select('id, platform, url, icon, is_active, display_order, created_at, updated_at')
+          .order('display_order', { ascending: true }),
       ])
 
       if (isCancelled) return
@@ -106,9 +245,61 @@ export function PortfolioDataProvider({ children }) {
       }
 
       if (!messagesResult.error && Array.isArray(messagesResult.data)) {
-        const mappedMessages = messagesResult.data.map(mapDbMessageToApp)
-        setMessages(mappedMessages)
-        persist(STORAGE_KEYS.messages, mappedMessages)
+        if (messagesResult.data.length > 0) {
+          const mappedMessages = messagesResult.data.map(mapDbMessageToApp)
+          setMessages(mappedMessages)
+          persist(STORAGE_KEYS.messages, mappedMessages)
+        } else if (messagesRef.current.length > 0) {
+          await supabase.from('contact_messages').insert(
+            messagesRef.current.map((item) => ({
+              full_name: sanitizeText(item.fullName),
+              email: sanitizeText(item.email),
+              subject: sanitizeText(item.subject),
+              message: sanitizeText(item.message),
+              submitted_at: item.submittedAt || new Date().toISOString(),
+              is_read: Boolean(item.isRead),
+            })),
+          )
+        }
+      }
+
+      if (!servicesResult.error && Array.isArray(servicesResult.data)) {
+        if (servicesResult.data.length > 0) {
+          const mappedServices = servicesResult.data.map(mapDbServiceToApp)
+          setServices(mappedServices)
+          persist(STORAGE_KEYS.services, mappedServices)
+        } else if (servicesRef.current.length > 0) {
+          await supabase.from('portfolio_services').upsert(
+            servicesRef.current.map(mapAppServiceToDb),
+            { onConflict: 'id' },
+          )
+        }
+      }
+
+      if (!projectsResult.error && Array.isArray(projectsResult.data)) {
+        if (projectsResult.data.length > 0) {
+          const mappedProjects = projectsResult.data.map(mapDbProjectToApp)
+          setProjects(mappedProjects)
+          persist(STORAGE_KEYS.projects, mappedProjects)
+        } else if (projectsRef.current.length > 0) {
+          await supabase.from('portfolio_projects').upsert(
+            projectsRef.current.map(mapAppProjectToDb),
+            { onConflict: 'id' },
+          )
+        }
+      }
+
+      if (!socialLinksResult.error && Array.isArray(socialLinksResult.data)) {
+        if (socialLinksResult.data.length > 0) {
+          const mappedSocialLinks = socialLinksResult.data.map(mapDbSocialLinkToApp)
+          setSocialLinks(mappedSocialLinks)
+          persist(STORAGE_KEYS.socialLinks, mappedSocialLinks)
+        } else if (socialLinksRef.current.length > 0) {
+          await supabase.from('social_links').upsert(
+            socialLinksRef.current.map(mapAppSocialLinkToDb),
+            { onConflict: 'id' },
+          )
+        }
       }
     }
 
@@ -119,7 +310,7 @@ export function PortfolioDataProvider({ children }) {
     }
   }, [hasSupabase])
 
-  const upsertService = (service, id) => {
+  const upsertService = async (service, id) => {
     const now = new Date().toISOString()
     const cleaned = {
       id: id || getId('service'),
@@ -136,21 +327,37 @@ export function PortfolioDataProvider({ children }) {
       updatedAt: now,
     }
 
-    const next = id
-      ? services.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
-      : [...services, cleaned]
-    setServices(next)
-    persist(STORAGE_KEYS.services, next)
+    if (hasSupabase) {
+      const { error } = await supabase
+        .from('portfolio_services')
+        .upsert(mapAppServiceToDb(cleaned), { onConflict: 'id' })
+      if (error) throw error
+    }
+
+    setServices((prev) => {
+      const next = id
+        ? prev.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
+        : [...prev, cleaned]
+      persist(STORAGE_KEYS.services, next)
+      return next
+    })
     return cleaned
   }
 
-  const deleteService = (id) => {
-    const next = services.filter((item) => item.id !== id)
-    setServices(next)
-    persist(STORAGE_KEYS.services, next)
+  const deleteService = async (id) => {
+    if (hasSupabase) {
+      const { error } = await supabase.from('portfolio_services').delete().eq('id', id)
+      if (error) throw error
+    }
+
+    setServices((prev) => {
+      const next = prev.filter((item) => item.id !== id)
+      persist(STORAGE_KEYS.services, next)
+      return next
+    })
   }
 
-  const upsertProject = (project, id) => {
+  const upsertProject = async (project, id) => {
     const now = new Date().toISOString()
     const cleaned = {
       id: id || getId('project'),
@@ -187,18 +394,34 @@ export function PortfolioDataProvider({ children }) {
       updatedAt: now,
     }
 
-    const next = id
-      ? projects.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
-      : [...projects, cleaned]
-    setProjects(next)
-    persist(STORAGE_KEYS.projects, next)
+    if (hasSupabase) {
+      const { error } = await supabase
+        .from('portfolio_projects')
+        .upsert(mapAppProjectToDb(cleaned), { onConflict: 'id' })
+      if (error) throw error
+    }
+
+    setProjects((prev) => {
+      const next = id
+        ? prev.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
+        : [...prev, cleaned]
+      persist(STORAGE_KEYS.projects, next)
+      return next
+    })
     return cleaned
   }
 
-  const deleteProject = (id) => {
-    const next = projects.filter((item) => item.id !== id)
-    setProjects(next)
-    persist(STORAGE_KEYS.projects, next)
+  const deleteProject = async (id) => {
+    if (hasSupabase) {
+      const { error } = await supabase.from('portfolio_projects').delete().eq('id', id)
+      if (error) throw error
+    }
+
+    setProjects((prev) => {
+      const next = prev.filter((item) => item.id !== id)
+      persist(STORAGE_KEYS.projects, next)
+      return next
+    })
   }
 
   const updateSettings = async (nextSettings) => {
@@ -226,7 +449,7 @@ export function PortfolioDataProvider({ children }) {
     return cleaned
   }
 
-  const upsertSocialLink = (link, id) => {
+  const upsertSocialLink = async (link, id) => {
     const cleaned = {
       id: id || getId('social'),
       platform: sanitizeText(link.platform),
@@ -236,18 +459,34 @@ export function PortfolioDataProvider({ children }) {
       displayOrder: toNumber(link.displayOrder, 0),
     }
 
-    const next = id
-      ? socialLinks.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
-      : [...socialLinks, cleaned]
-    setSocialLinks(next)
-    persist(STORAGE_KEYS.socialLinks, next)
+    if (hasSupabase) {
+      const { error } = await supabase
+        .from('social_links')
+        .upsert(mapAppSocialLinkToDb(cleaned), { onConflict: 'id' })
+      if (error) throw error
+    }
+
+    setSocialLinks((prev) => {
+      const next = id
+        ? prev.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
+        : [...prev, cleaned]
+      persist(STORAGE_KEYS.socialLinks, next)
+      return next
+    })
     return cleaned
   }
 
-  const deleteSocialLink = (id) => {
-    const next = socialLinks.filter((item) => item.id !== id)
-    setSocialLinks(next)
-    persist(STORAGE_KEYS.socialLinks, next)
+  const deleteSocialLink = async (id) => {
+    if (hasSupabase) {
+      const { error } = await supabase.from('social_links').delete().eq('id', id)
+      if (error) throw error
+    }
+
+    setSocialLinks((prev) => {
+      const next = prev.filter((item) => item.id !== id)
+      persist(STORAGE_KEYS.socialLinks, next)
+      return next
+    })
   }
 
   const addMessage = async (message) => {
