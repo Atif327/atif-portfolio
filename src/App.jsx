@@ -17,7 +17,6 @@ import AdminProjectsPage from './pages/admin/AdminProjectsPage'
 import AdminMessagesPage from './pages/admin/AdminMessagesPage'
 import AdminSettingsPage from './pages/admin/AdminSettingsPage'
 import AdminSocialLinksPage from './pages/admin/AdminSocialLinksPage'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Navigate, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import ProtectedRoute from './admin/ProtectedRoute'
 
@@ -25,16 +24,6 @@ export default function App(){
   const navigate = useNavigate()
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
-
-  const resetScrollPosition = () => {
-    if (typeof window === 'undefined') return
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-    document.documentElement?.scrollTo?.({ top: 0, left: 0, behavior: 'auto' })
-    document.body?.scrollTo?.({ top: 0, left: 0, behavior: 'auto' })
-    document.querySelectorAll('.main-content, .admin-main').forEach((element) => {
-      element.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-    })
-  }
 
   const activePublicNav = (() => {
     if (location.pathname === '/') return 'home'
@@ -57,15 +46,7 @@ export default function App(){
       admin: '/admin/login'
     }
     const path = map[id] || '/'
-    if (path === location.pathname) {
-      resetScrollPosition()
-      return
-    }
     navigate(path)
-    requestAnimationFrame(() => {
-      resetScrollPosition()
-      requestAnimationFrame(resetScrollPosition)
-    })
   }
 
   return (
@@ -131,19 +112,17 @@ export default function App(){
           <AnimatedBg />
           <Sidebar active={activePublicNav} onNavigate={handleNavigate} />
           <div className="main-content min-h-screen">
-            <AnimatePresence mode="wait">
-              <motion.main key={location.pathname} initial={{opacity:0,y:40}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:0.45}}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/projects" element={<Projects />} />
-                  <Route path="/news" element={<News />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </motion.main>
-            </AnimatePresence>
+            <main key={location.pathname}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
             <Footer />
           </div>
           <Cursor />
