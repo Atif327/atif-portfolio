@@ -3,6 +3,7 @@ import AdminLayout from '../../components/admin/AdminLayout'
 import ConfirmModal from '../../components/admin/shared/ConfirmModal'
 import StatusBadge from '../../components/admin/shared/StatusBadge'
 import { usePortfolioData } from '../../context/PortfolioDataContext'
+import { supabase } from '../../lib/supabaseClient'
 
 const emptyForm = {
   title: '',
@@ -52,7 +53,31 @@ export default function AdminProjectsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const UPLOAD_SERVER_URL = import.meta.env.VITE_UPLOAD_SERVER_URL || 'http://localhost:5000'
+  const UPLOAD_SERVER_URL = import.meta.env.VITE_UPLOAD_SERVER_URL || ''
+
+  const uploadToSupabaseStorage = async (file, imageName) => {
+    if (!supabase || typeof supabase.storage?.from !== 'function') {
+      throw new Error('Image upload service is not configured.')
+    }
+
+    const extension = file.name?.split('.').pop()?.toLowerCase() || 'jpg'
+    const filePath = `${imageName}-${Date.now()}.${extension}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('news-images')
+      .upload(filePath, file, { contentType: file.type || 'image/jpeg', upsert: false })
+
+    if (uploadError) {
+      throw new Error(uploadError.message || 'Unable to upload image to storage.')
+    }
+
+    const { data } = supabase.storage.from('news-images').getPublicUrl(filePath)
+    if (!data?.publicUrl) {
+      throw new Error('Unable to get uploaded image URL.')
+    }
+
+    return data.publicUrl
+  }
 
   const categories = useMemo(() => {
     return ['all', ...new Set(projects.map((project) => project.category).filter(Boolean))]
@@ -158,31 +183,39 @@ export default function AdminProjectsPage() {
       if (thumbnailFile) {
         setUploadingThumbnail(true)
 
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result)
-          reader.onerror = () => reject(new Error('Unable to read selected image file.'))
-          reader.readAsDataURL(thumbnailFile)
-        })
-
         const imageName = String(form.title || 'project')
           .trim()
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '') || 'project'
 
-        const response = await fetch(`${UPLOAD_SERVER_URL}/api/upload-image`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: dataUrl, name: `${imageName}-thumbnail` }),
-        })
+        const uploadApiUrl = UPLOAD_SERVER_URL
+          ? `${UPLOAD_SERVER_URL}/api/upload-image`
+          : '/api/upload-image'
 
-        const uploadResult = await response.json().catch(() => null)
-        if (!response.ok || !uploadResult?.url) {
-          throw new Error(uploadResult?.error || 'Unable to upload project image.')
+        try {
+          const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = () => reject(new Error('Unable to read selected image file.'))
+            reader.readAsDataURL(thumbnailFile)
+          })
+
+          const response = await fetch(uploadApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: dataUrl, name: `${imageName}-thumbnail` }),
+          })
+
+          const uploadResult = await response.json().catch(() => null)
+          if (!response.ok || !uploadResult?.url) {
+            throw new Error(uploadResult?.error || 'API upload failed.')
+          }
+
+          thumbnailUrl = uploadResult.url
+        } catch {
+          thumbnailUrl = await uploadToSupabaseStorage(thumbnailFile, `${imageName}-thumbnail`)
         }
-
-        thumbnailUrl = uploadResult.url
       }
 
       if (thumbnailUrl && !isValidUrl(thumbnailUrl)) {
