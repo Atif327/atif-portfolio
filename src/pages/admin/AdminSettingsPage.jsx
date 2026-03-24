@@ -7,10 +7,113 @@ export default function AdminSettingsPage() {
   const [form, setForm] = useState(settings)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [uploadError, setUploadError] = useState('')
+  const [heroUploadError, setHeroUploadError] = useState('')
+  const [uploadingProfilePhoto, setUploadingProfilePhoto] = useState(false)
+  const [uploadingHeroImage, setUploadingHeroImage] = useState(false)
+  const UPLOAD_SERVER_URL = import.meta.env.VITE_UPLOAD_SERVER_URL || 'http://localhost:5000'
 
   useEffect(() => {
     setForm(settings)
   }, [settings])
+
+  const uploadProfilePhoto = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type?.startsWith('image/')) {
+      setUploadError('Please select a valid image file.')
+      event.target.value = ''
+      return
+    }
+
+    setUploadError('')
+    setUploadingProfilePhoto(true)
+
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = () => reject(new Error('Unable to read selected file.'))
+        reader.readAsDataURL(file)
+      })
+
+      const imageName = String(form.fullName || 'profile-photo')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'profile-photo'
+
+      const response = await fetch(`${UPLOAD_SERVER_URL}/api/upload-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: dataUrl, name: `${imageName}-profile` }),
+      })
+
+      const result = await response.json().catch(() => null)
+      if (!response.ok || !result?.url) {
+        throw new Error(result?.error || 'Upload request failed.')
+      }
+
+      setForm((prev) => ({ ...prev, profileImage: result.url }))
+      setSuccess('Profile photo uploaded. Click Save Settings to publish it.')
+      setUploadError('')
+    } catch (uploadFailure) {
+      setUploadError(uploadFailure?.message || 'Unable to upload profile photo right now.')
+    } finally {
+      setUploadingProfilePhoto(false)
+      event.target.value = ''
+    }
+  }
+
+  const uploadHeroImage = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type?.startsWith('image/')) {
+      setHeroUploadError('Please select a valid image file.')
+      event.target.value = ''
+      return
+    }
+
+    setHeroUploadError('')
+    setUploadingHeroImage(true)
+
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = () => reject(new Error('Unable to read selected file.'))
+        reader.readAsDataURL(file)
+      })
+
+      const imageName = String(form.fullName || 'hero-photo')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'hero-photo'
+
+      const response = await fetch(`${UPLOAD_SERVER_URL}/api/upload-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: dataUrl, name: `${imageName}-hero` }),
+      })
+
+      const result = await response.json().catch(() => null)
+      if (!response.ok || !result?.url) {
+        throw new Error(result?.error || 'Upload request failed.')
+      }
+
+      setForm((prev) => ({ ...prev, heroImage: result.url }))
+      setSuccess('Hero image uploaded. Click Save Settings to publish it.')
+      setHeroUploadError('')
+    } catch (uploadFailure) {
+      setHeroUploadError(uploadFailure?.message || 'Unable to upload hero image right now.')
+    } finally {
+      setUploadingHeroImage(false)
+      event.target.value = ''
+    }
+  }
 
   const onSubmit = async (event) => {
     event.preventDefault()
@@ -124,10 +227,30 @@ export default function AdminSettingsPage() {
               <div className="admin-form-field">
                 <label className="admin-form-label">Profile Image URL</label>
                 <input className="admin-form-input" value={form.profileImage || ''} onChange={(event) => setForm((prev) => ({ ...prev, profileImage: event.target.value }))} />
+                <input type="file" accept="image/*" className="admin-form-input" onChange={uploadProfilePhoto} disabled={uploadingProfilePhoto} style={{ marginTop: '8px' }} />
+                {uploadingProfilePhoto ? <p className="admin-form-success">Uploading profile photo…</p> : null}
+                {uploadError ? <p className="admin-form-error">{uploadError}</p> : null}
+                {form.profileImage ? (
+                  <img
+                    src={form.profileImage}
+                    alt="Profile preview"
+                    style={{ width: '84px', height: '84px', objectFit: 'cover', borderRadius: '9999px', marginTop: '10px' }}
+                  />
+                ) : null}
               </div>
               <div className="admin-form-field admin-form-field-full">
                 <label className="admin-form-label">Hero / About Image URL</label>
                 <input className="admin-form-input" value={form.heroImage || ''} onChange={(event) => setForm((prev) => ({ ...prev, heroImage: event.target.value }))} />
+                <input type="file" accept="image/*" className="admin-form-input" onChange={uploadHeroImage} disabled={uploadingHeroImage} style={{ marginTop: '8px' }} />
+                {uploadingHeroImage ? <p className="admin-form-success">Uploading hero image…</p> : null}
+                {heroUploadError ? <p className="admin-form-error">{heroUploadError}</p> : null}
+                {form.heroImage ? (
+                  <img
+                    src={form.heroImage}
+                    alt="Hero image preview"
+                    style={{ width: '150px', height: '84px', objectFit: 'cover', borderRadius: '10px', marginTop: '10px' }}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
