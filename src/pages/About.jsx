@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Seo from '../components/Seo'
 import { usePortfolioData } from '../context/PortfolioDataContext'
@@ -10,6 +10,46 @@ const statItems = [
   { value: '5+', label: 'Completed Projects' },
   { value: '100%', label: 'Client Focused Delivery' },
 ]
+
+function parseStatValue(value) {
+  const raw = String(value || '').trim()
+  const number = Number(raw.replace(/[^0-9.]/g, ''))
+  const safeNumber = Number.isFinite(number) ? number : 0
+  const suffix = raw.replace(/[0-9.]/g, '')
+  return { number: safeNumber, suffix }
+}
+
+function AnimatedStatValue({ value, duration = 2000, shouldStart = false }) {
+  const { number: target, suffix } = useMemo(() => parseStatValue(value), [value])
+  const [displayValue, setDisplayValue] = useState(0)
+
+  useEffect(() => {
+    if (!shouldStart) {
+      setDisplayValue(0)
+      return undefined
+    }
+
+    const startTime = performance.now()
+    let frameId = 0
+
+    const tick = (now) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - (1 - progress) * (1 - progress)
+      const nextValue = Math.round(target * eased)
+      setDisplayValue(nextValue)
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick)
+      }
+    }
+
+    frameId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameId)
+  }, [duration, shouldStart, target])
+
+  return <>{`${displayValue}${suffix}`}</>
+}
 
 const skillCategories = [
   {
@@ -75,6 +115,7 @@ function getBioParagraphs(content) {
 export default function About(){
   const { settings } = usePortfolioData()
   const bioParagraphs = getBioParagraphs(settings.aboutContent)
+  const [countersStarted, setCountersStarted] = useState(false)
 
   return (
     <motion.div initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} transition={{duration:0.6}} className="about-v2">
@@ -113,12 +154,12 @@ export default function About(){
         </div>
       </section>
 
-      <motion.section className="about-v2__section" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
+      <motion.section className="about-v2__section reveal-on-scroll" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }} onViewportEnter={() => setCountersStarted(true)}>
         <h3 className="about-v2__section-title">Statistics</h3>
         <div className="about-v2__stats-grid">
           {statItems.map((item) => (
             <article key={item.label} className="about-v2__stat-card">
-              <p className="about-v2__stat-value">{item.value}</p>
+              <p className="about-v2__stat-value"><AnimatedStatValue value={item.value} duration={2000} shouldStart={countersStarted} /></p>
               <p className="about-v2__stat-label">{item.label}</p>
             </article>
           ))}
@@ -152,7 +193,7 @@ export default function About(){
         </div>
       </motion.section>
 
-      <motion.section className="about-v2__section" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
+      <motion.section className="about-v2__section reveal-on-scroll" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
         <h3 className="about-v2__section-title">Personal Interests</h3>
         <div className="about-v2__interests-grid">
           {interestItems.map((interest) => {

@@ -53,8 +53,8 @@ function renderMarkdown(content) {
 
   return blocks.map((block, index) => {
     if (block.type === 'h1') return <h1 key={`b-${index}`}>{block.text}</h1>
-    if (block.type === 'h2') return <h2 key={`b-${index}`}>{block.text}</h2>
-    if (block.type === 'h3') return <h3 key={`b-${index}`}>{block.text}</h3>
+    if (block.type === 'h2') return <h2 key={`b-${index}`} className={isQuestionHeading(block.text) ? 'is-question' : ''}>{block.text}</h2>
+    if (block.type === 'h3') return <h3 key={`b-${index}`} className={isQuestionHeading(block.text) ? 'is-question' : ''}>{block.text}</h3>
     if (block.type === 'ul') {
       return (
         <ul key={`b-${index}`}>
@@ -66,6 +66,38 @@ function renderMarkdown(content) {
     }
     return <p key={`b-${index}`}>{block.text}</p>
   })
+}
+
+function extractQuickAnswer(content, fallback) {
+  const lines = String(content || '')
+    .split('\n')
+    .map((line) => line.trim())
+
+  let sawTitle = false
+
+  for (const line of lines) {
+    if (!line) continue
+    if (line.startsWith('# ')) {
+      sawTitle = true
+      continue
+    }
+    if (line.startsWith('## ') || line.startsWith('### ') || line.startsWith('- ')) {
+      continue
+    }
+
+    if (sawTitle || !line.startsWith('#')) {
+      return line
+    }
+  }
+
+  return fallback || ''
+}
+
+function isQuestionHeading(text) {
+  const value = String(text || '').trim()
+  if (!value) return false
+  if (value.endsWith('?')) return true
+  return /^(what|why|how|when|where|who|which|can|should|does|do|is|are)\b/i.test(value)
 }
 
 export default function BlogPost() {
@@ -83,6 +115,26 @@ export default function BlogPost() {
 
   const seoTitle = post.seoTitle || `${post.title} | Atif Ayyoub`
   const seoDescription = post.seoDescription || post.excerpt
+  const quickAnswer = extractQuickAnswer(post.content, post.excerpt)
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: seoDescription,
+    image: [post.coverImage || '/preview.png'],
+    url: `https://atif-portfolio-nine.vercel.app/blog/${post.slug}`,
+    datePublished: post.publishedAt || post.createdAt || post.updatedAt || new Date().toISOString(),
+    dateModified: post.updatedAt || post.publishedAt || new Date().toISOString(),
+    author: {
+      '@type': 'Person',
+      name: 'Atif Ayyoub',
+    },
+    publisher: {
+      '@type': 'Person',
+      name: 'Atif Ayyoub',
+    },
+    mainEntityOfPage: `https://atif-portfolio-nine.vercel.app/blog/${post.slug}`,
+  }
 
   return (
     <article className="blog-post-page">
@@ -91,6 +143,7 @@ export default function BlogPost() {
         description={seoDescription}
         pathname={`/blog/${post.slug}`}
         image={post.coverImage || '/preview.png'}
+        schema={articleSchema}
       />
 
       <div className="blog-post-page__container">
@@ -116,6 +169,13 @@ export default function BlogPost() {
             <img src={post.coverImage || '/preview.png'} alt={`${post.title} cover`} className="blog-post-cover" />
           </div>
         </header>
+
+        {quickAnswer ? (
+          <section className="blog-quick-answer card-shell" aria-label="Quick answer">
+            <p className="blog-quick-answer__label">Quick Answer</p>
+            <p className="blog-quick-answer__text">{quickAnswer}</p>
+          </section>
+        ) : null}
 
         <section className="blog-post-content card-shell">{renderMarkdown(post.content)}</section>
 

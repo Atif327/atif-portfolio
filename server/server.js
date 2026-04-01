@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const uploadImageRoute = require('./upload-image');
+const assistantChatRoute = require('./assistant-chat');
 
 const app = express();
 app.use(cors());
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api', uploadImageRoute);
+app.use('/api/assistant', assistantChatRoute);
 
 // Start server
 const PORT = process.env.PORT || 5000;

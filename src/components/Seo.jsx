@@ -14,9 +14,11 @@ export default function Seo({
   pathname = '/',
   image = '/preview.png',
   noindex = false,
+  schema = null,
 }) {
   const canonicalUrl = toAbsoluteUrl(pathname)
   const imageUrl = toAbsoluteUrl(image)
+  const schemaList = Array.isArray(schema) ? schema.filter(Boolean) : schema ? [schema] : []
 
   return (
     <Helmet>
@@ -35,6 +37,12 @@ export default function Seo({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={imageUrl} />
+
+      {schemaList.map((item, index) => (
+        <script key={`schema-${index}`} type="application/ld+json">
+          {JSON.stringify(item)}
+        </script>
+      ))}
     </Helmet>
   )
 }

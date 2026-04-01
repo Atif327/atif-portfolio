@@ -1,9 +1,10 @@
 import React, { Suspense } from 'react'
 import Sidebar from './components/Sidebar'
 import Cursor from './components/Cursor'
-import AnimatedBg from './components/AnimatedBg'
+import DeferredAnimatedBg from './components/DeferredAnimatedBg'
 import Footer from './components/Footer'
 import Loader from './components/Loader'
+import ScrollEnhancements from './components/ScrollEnhancements'
 import { Navigate, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import ProtectedRoute from './admin/ProtectedRoute'
 
@@ -11,6 +12,9 @@ const Home = React.lazy(() => import('./pages/Home'))
 const About = React.lazy(() => import('./pages/About'))
 const Services = React.lazy(() => import('./pages/Services'))
 const Projects = React.lazy(() => import('./pages/Projects'))
+const ProjectCaseStudy = React.lazy(() => import('./pages/ProjectCaseStudy'))
+const ProgrammaticSeoPage = React.lazy(() => import('./pages/ProgrammaticSeoPage'))
+const Assistant = React.lazy(() => import('./pages/Assistant'))
 const Blog = React.lazy(() => import('./pages/Blog'))
 const BlogPost = React.lazy(() => import('./pages/BlogPost'))
 const News = React.lazy(() => import('./pages/News'))
@@ -36,6 +40,7 @@ export default function App(){
     if (location.pathname.startsWith('/about')) return 'about'
     if (location.pathname.startsWith('/services')) return 'services'
     if (location.pathname.startsWith('/projects')) return 'projects'
+    if (location.pathname.startsWith('/assistant')) return 'assistant'
     if (location.pathname.startsWith('/blog')) return 'blog'
     if (location.pathname.startsWith('/news')) return 'news'
     if (location.pathname.startsWith('/contact')) return 'contact'
@@ -48,6 +53,7 @@ export default function App(){
       about: '/about',
       services: '/services',
       projects: '/projects',
+      assistant: '/assistant',
       blog: '/blog',
       news: '/news',
       contact: '/contact',
@@ -60,6 +66,7 @@ export default function App(){
   return (
     <>
       <Loader />
+      <ScrollEnhancements />
       {isAdminRoute ? (
         <Suspense fallback={<div className="p-8 text-[var(--text-secondary)]">Loading page...</div>}>
           <Routes>
@@ -127,7 +134,7 @@ export default function App(){
       ) : (
         <div className="min-h-screen relative">
           <div className="background-circle" />
-          <AnimatedBg />
+          <DeferredAnimatedBg />
           <Sidebar active={activePublicNav} onNavigate={handleNavigate} />
           <div className="main-content min-h-screen">
             <main key={location.pathname}>
@@ -137,6 +144,13 @@ export default function App(){
                   <Route path="/about" element={<About />} />
                   <Route path="/services" element={<Services />} />
                   <Route path="/projects" element={<Projects />} />
+                  <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
+                  <Route path="/assistant" element={<Assistant />} />
+                  <Route path="/hire-ai-developer" element={<ProgrammaticSeoPage slug="hire-ai-developer" />} />
+                  <Route path="/hire-react-developer" element={<ProgrammaticSeoPage slug="hire-react-developer" />} />
+                  <Route path="/ai-web-developer-pakistan" element={<ProgrammaticSeoPage slug="ai-web-developer-pakistan" />} />
+                  <Route path="/build-saas-app" element={<ProgrammaticSeoPage slug="build-saas-app" />} />
+                  <Route path="/custom-ai-solutions" element={<ProgrammaticSeoPage slug="custom-ai-solutions" />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route path="/news" element={<News />} />

@@ -2,12 +2,26 @@ import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Loader() {
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return true
+
+    return sessionStorage.getItem('portfolio-loader-seen') !== '1'
+  })
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), 1800)
+    if (!visible) return undefined
+
+    const timer = setTimeout(() => {
+      sessionStorage.setItem('portfolio-loader-seen', '1')
+      setVisible(false)
+    }, 220)
+
     return () => clearTimeout(timer)
-  }, [])
+  }, [visible])
+
+  if (!visible) {
+    return null
+  }
 
   return (
     <AnimatePresence>

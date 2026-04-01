@@ -21,7 +21,7 @@ export default function ServiceCard({ icon: Icon, title, price, tags = [], onHir
         </div>
 
         <button type="button" className="service-hire-btn" onClick={onHire}>
-          Hire Me
+          Hire AI Web Developer
         </button>
       </div>
     </div>

@@ -1,8 +1,21 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { ArrowUpRight, Github } from 'lucide-react'
 
+function slugify(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 export default function ProjectCard({ project, large = false, className = '' }){
+  const caseStudySlug = slugify(project.title)
+
   return (
     <motion.article
       whileHover={{ y: -8 }}
@@ -18,7 +31,7 @@ export default function ProjectCard({ project, large = false, className = '' }){
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40" />
           <div className="flex items-center justify-center h-full text-white/40">
             {project.image
-              ? <img src={project.image} alt={`${project.title} project preview by Atif Ayyoub`} loading="lazy" decoding="async" className="project-card-image object-cover w-full h-full" />
+              ? <img src={project.image} alt={`${project.title} AI web development project for ${project.category || 'modern apps'}`} loading="lazy" decoding="async" className="project-card-image object-cover w-full h-full" />
               : <div className="text-sm">Project Screenshot Placeholder</div>}
           </div>
         </div>
@@ -43,12 +56,15 @@ export default function ProjectCard({ project, large = false, className = '' }){
 
         {/* Buttons */}
         <div className="project-buttons">
+          <Link to={`/projects/${caseStudySlug}`} className="btn-contact project-btn inline-flex items-center gap-2 text-sm">
+            View Case Study
+          </Link>
           {project.liveUrl ? (
             <a href={project.liveUrl} target="_blank" rel="noreferrer" className="btn-resume project-btn text-sm inline-flex items-center gap-1">
-              Live Demo <ArrowUpRight size={15} />
+              View Live AI Web App <ArrowUpRight size={15} />
             </a>
           ) : (
-            <button className="btn-resume project-btn text-sm" disabled>Live Demo</button>
+            <button className="btn-resume project-btn text-sm" disabled>View Live AI Web App</button>
           )}
           {project.repo ? (
             <a className="btn-contact project-btn inline-flex items-center gap-2 text-sm" href={project.repo} target="_blank" rel="noreferrer">
