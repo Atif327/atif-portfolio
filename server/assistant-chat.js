@@ -31,7 +31,7 @@ const assistantProfile = {
       summary: 'A Flutter productivity app for managing tasks and reminders.',
       problem: 'Users need a simple way to track daily tasks on mobile.',
       solution: 'Built a lightweight task flow with reminders and clean mobile UI.',
-      tech: ['Flutter', 'Dart', 'Firebase'],
+      tech: ['Flutter', 'Dart', 'SQLite'],
       features: ['Task tracking', 'Reminders', 'Mobile-first UI'],
       role: 'Mobile app developer',
       status: 'Completed',
@@ -41,7 +41,7 @@ const assistantProfile = {
       summary: 'A React and Node.js assessment platform for evaluations.',
       problem: 'Institutions need a structured way to manage assessments and results.',
       solution: 'Built a web system for evaluation workflows and reporting.',
-      tech: ['React', 'Node.js', 'JavaScript', 'MySQL'],
+      tech: ['React', 'Node.js', 'JavaScript', 'SQLite'],
       features: ['Assessment flow', 'Results management', 'Responsive dashboard'],
       role: 'Full-stack developer',
       status: 'Completed',
@@ -217,6 +217,17 @@ function buildFaqReply(text) {
   ].join('\n')
 }
 
+function extractRequestedProjectReference(text) {
+  const source = String(text || '').trim()
+  const pattern = /\b(?:summarize|summary|explain|tell me about|tell me more about|tell me more|what stack was used for|what stack was used|what stack|what features does it have|what features|what problem does it solve)\b\s*(.*)$/i
+  const match = source.match(pattern)
+  return match && match[1] ? match[1].trim() : ''
+}
+
+function looksLikeProjectReference(text) {
+  return /\b(project|app|system|clone|hub|manager|tool|portal|website|dashboard|platform)\b/i.test(String(text || ''))
+}
+
 function buildReply(message, history = [], context = {}) {
   const text = normalize(message)
   if (!text) return 'Ask me about projects, services, skills, hiring, or blog topics.'
@@ -239,19 +250,20 @@ function buildReply(message, history = [], context = {}) {
 
   // If a specific project is selected, either by explicit state or unique identification, summarize it
   if (projectContext.selected) {
-    // If it's a follow-up intent (explain, summarize, tell me more), return detailed summary
-    if (followUpIntent) {
-      return summarizeProject(projectContext.selected)
-    }
-    // Even without explicit follow-up intent, if a project was clearly identified, provide summary
-    // This handles cases like "Wallpaper Hub" which directly name-drop a project
-    if (findProjectByTitle(message).length > 0) {
+    // Hard safeguard: never let fallback logic override an explicit project summary on follow-up
+    if (followUpIntent || findProjectByTitle(message).length > 0) {
       return summarizeProject(projectContext.selected)
     }
   }
 
   // If follow-up but no single project selected yet, handle ambiguity
   if (followUpIntent) {
+    const requestedProject = extractRequestedProjectReference(message)
+
+    if (requestedProject && looksLikeProjectReference(requestedProject) && projectContext.candidates.length === 0) {
+      return 'That project is not in the portfolio.'
+    }
+
     if (projectContext.candidates.length > 1) {
       return `Which project would you like me to summarize: ${projectContext.candidates.join(', ')}?`
     }
