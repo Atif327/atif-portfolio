@@ -51,7 +51,7 @@ export default function Footer() {
               const Icon = getSocialIcon(link.icon)
               return (
                 <a key={link.id} href={link.url} target="_blank" rel="noreferrer" aria-label={link.platform}>
-                  <Icon />
+                  {link.iconUrl ? <img src={link.iconUrl} alt="" loading="lazy" decoding="async" className="footer-social-image" /> : <Icon />}
                   <span>{link.platform}</span>
                 </a>
               )

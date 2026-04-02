@@ -9,6 +9,7 @@ const emptyForm = {
   platform: '',
   url: '',
   icon: 'globe',
+  iconUrl: '',
   isActive: true,
   displayOrder: 1,
 }
@@ -21,6 +22,12 @@ function isValidUrl(value) {
   } catch {
     return false
   }
+}
+
+function isValidIconUrl(value) {
+  if (!value) return true
+  if (String(value).startsWith('/')) return true
+  return isValidUrl(value)
 }
 
 export default function AdminSocialLinksPage() {
@@ -42,6 +49,7 @@ export default function AdminSocialLinksPage() {
 
     if (!form.platform.trim()) return setError('Platform name is required.')
     if (!isValidUrl(form.url)) return setError('Valid URL is required.')
+    if (!isValidIconUrl(form.iconUrl)) return setError('Icon/Logo URL must be a valid URL or start with /.')
 
     try {
       await upsertSocialLink(form, editing?.id)
@@ -118,6 +126,15 @@ export default function AdminSocialLinksPage() {
               <div className="admin-form-field">
                 <label className="admin-form-label">Display Order</label>
                 <input type="number" className="admin-form-input" value={form.displayOrder} onChange={(event) => setForm((prev) => ({ ...prev, displayOrder: Number(event.target.value) }))} />
+              </div>
+              <div className="admin-form-field admin-form-field-full">
+                <label className="admin-form-label">Icon/Logo URL</label>
+                <input
+                  className="admin-form-input"
+                  value={form.iconUrl || ''}
+                  onChange={(event) => setForm((prev) => ({ ...prev, iconUrl: event.target.value }))}
+                  placeholder="https://... or /your-logo.png"
+                />
               </div>
             </div>
 

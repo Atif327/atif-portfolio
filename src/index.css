@@ -124,6 +124,12 @@ body{
 .social-card{ background:var(--border); padding:18px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:0.3s; text-decoration:none }
 .social-card:hover{ transform:translateY(-5px); background:#374151; box-shadow:0 10px 25px rgba(0,0,0,0.5) }
 .social-icon{ font-size:26px; margin-bottom:8px; color:var(--secondary) }
+.social-icon img{
+  width:26px;
+  height:26px;
+  object-fit:contain;
+  display:block;
+}
 .social-card span{ color:#E5E7EB; font-size:14px }
 
 @media (max-width: 767px){
@@ -3290,6 +3296,13 @@ html { scroll-behavior: smooth }
   box-shadow:0 8px 18px rgba(59,130,246,0.3);
 }
 
+.sidebar-social-image{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+  display:block;
+}
+
 .site-footer{
   margin-top:70px;
   border-top:1px solid rgba(255,255,255,0.08);
@@ -3315,6 +3328,14 @@ html { scroll-behavior: smooth }
 }
 
 .site-footer-links a:hover{ color:#22D3EE; }
+
+.footer-social-image{
+  width:16px;
+  height:16px;
+  object-fit:contain;
+  vertical-align:middle;
+  margin-right:6px;
+}
 
 /* Final premium polish overrides */
 .service-card-wrap{

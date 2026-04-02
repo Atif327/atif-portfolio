@@ -20,10 +20,10 @@ export const DEFAULT_SETTINGS = {
 }
 
 export const DEFAULT_SOCIAL_LINKS = [
-  { id: 'social-linkedin', platform: 'LinkedIn', url: 'https://www.linkedin.com', icon: 'linkedin', isActive: true, displayOrder: 1 },
-  { id: 'social-github', platform: 'GitHub', url: 'https://github.com', icon: 'github', isActive: true, displayOrder: 2 },
-  { id: 'social-twitter', platform: 'Twitter / X', url: 'https://twitter.com', icon: 'twitter', isActive: true, displayOrder: 3 },
-  { id: 'social-youtube', platform: 'YouTube', url: 'https://www.youtube.com', icon: 'youtube', isActive: true, displayOrder: 4 },
+  { id: 'social-linkedin', platform: 'LinkedIn', url: 'https://www.linkedin.com', icon: 'linkedin', iconUrl: '', isActive: true, displayOrder: 1 },
+  { id: 'social-github', platform: 'GitHub', url: 'https://github.com', icon: 'github', iconUrl: '', isActive: true, displayOrder: 2 },
+  { id: 'social-twitter', platform: 'Twitter / X', url: 'https://twitter.com', icon: 'twitter', iconUrl: '', isActive: true, displayOrder: 3 },
+  { id: 'social-youtube', platform: 'YouTube', url: 'https://www.youtube.com', icon: 'youtube', iconUrl: '', isActive: true, displayOrder: 4 },
 ]
 
 export const DEFAULT_SERVICES = [

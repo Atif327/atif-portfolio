@@ -217,6 +217,7 @@ export function PortfolioDataProvider({ children }) {
     platform: item.platform,
     url: item.url,
     icon: item.icon,
+    icon_url: item.iconUrl,
     is_active: Boolean(item.isActive),
     display_order: toNumber(item.displayOrder, 0),
     created_at: item.createdAt || new Date().toISOString(),
@@ -228,6 +229,7 @@ export function PortfolioDataProvider({ children }) {
     platform: sanitizeText(row.platform),
     url: sanitizeText(row.url),
     icon: sanitizeText(row.icon),
+    iconUrl: sanitizeText(row.icon_url),
     isActive: Boolean(row.is_active),
     displayOrder: toNumber(row.display_order, 0),
   })
@@ -355,7 +357,7 @@ export function PortfolioDataProvider({ children }) {
           .order('display_order', { ascending: true }),
         supabase
           .from('social_links')
-          .select('id, platform, url, icon, is_active, display_order, created_at, updated_at')
+          .select('id, platform, url, icon, icon_url, is_active, display_order, created_at, updated_at')
           .order('display_order', { ascending: true }),
         supabase
           .from('blog_posts')
@@ -626,6 +628,7 @@ export function PortfolioDataProvider({ children }) {
       platform: sanitizeText(link.platform),
       url: sanitizeText(link.url),
       icon: sanitizeText(link.icon),
+      iconUrl: sanitizeText(link.iconUrl),
       isActive: Boolean(link.isActive),
       displayOrder: toNumber(link.displayOrder, 0),
     }

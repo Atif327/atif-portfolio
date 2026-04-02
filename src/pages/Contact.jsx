@@ -54,7 +54,9 @@ export default function Contact(){
               const Icon = getSocialIcon(link.icon)
               return (
                 <a key={link.id} className="social-card" href={link.url} aria-label={link.platform} target="_blank" rel="noreferrer">
-                  <div className="social-icon"><Icon /></div>
+                  <div className="social-icon">
+                    {link.iconUrl ? <img src={link.iconUrl} alt="" loading="lazy" decoding="async" /> : <Icon />}
+                  </div>
                   <span>{link.platform}</span>
                 </a>
               )

@@ -23,7 +23,7 @@ export default function Sidebar({ active, onNavigate }){
   const [isMobileNavVisible, setIsMobileNavVisible] = useState(true)
   const { settings, sortedSocialLinks } = usePortfolioData()
   const profileSocials = sortedSocialLinks
-    .filter((link) => link.isActive && ['linkedin', 'github', 'twitter'].includes((link.icon || '').toLowerCase()))
+    .filter((link) => link.isActive)
     .slice(0, 3)
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function Sidebar({ active, onNavigate }){
                       rel="noreferrer"
                       aria-label={link.platform}
                     >
-                      <Icon />
+                      {link.iconUrl ? <img src={link.iconUrl} alt="" loading="lazy" decoding="async" className="sidebar-social-image" /> : <Icon />}
                     </a>
                   )
                 })}
