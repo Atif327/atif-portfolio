@@ -425,6 +425,12 @@ html { scroll-behavior: smooth }
 
   /* show only icons on mobile top bar */
 
+  /* Disable collapsed sidebar effects at tablet breakpoint since sidebar becomes fullwidth top bar */
+  .sidebar.collapsed ~ .main-content{
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
 }
 
 /* Mobile-only (narrow) header card and horizontal icons */
@@ -518,7 +524,10 @@ html { scroll-behavior: smooth }
 
 /* Collapsed sidebar styles */
 .sidebar.collapsed{ width:88px }
-.sidebar.collapsed ~ .main-content{ margin-left:88px }
+.sidebar.collapsed ~ .main-content{ 
+  margin-left:88px;
+  width:calc(100% - 88px);
+}
 .sidebar.collapsed .profile-circle{ width:84px; height:84px; border-width:2px }
 .sidebar.collapsed .profile-image{ width:84px; height:84px; border-width:2px }
 .sidebar.collapsed .profile-block > h2,
@@ -534,8 +543,9 @@ html { scroll-behavior: smooth }
 .collapse-btn:hover{ background: linear-gradient(135deg,var(--primary),var(--secondary)); color: #fff; box-shadow:0 8px 24px rgba(79,70,229,0.18) }
 .collapse-btn:hover svg{ transform: rotate(90deg) }
 
-/* smooth transitions */
+/* smooth transitions for layout changes */
 .sidebar, .main-content, .profile-circle, .profile-image, .collapse-btn{ transition: all .22s ease }
+.main-content{ transition: margin-left .22s ease, width .22s ease }
 
 /* Details cards on Home */
 
