@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { FaBars, FaBlog, FaCog, FaEnvelope, FaFolderOpen, FaHome, FaSignOutAlt, FaTools } from 'react-icons/fa'
+import { FaBars, FaBlog, FaCog, FaEnvelope, FaFolderOpen, FaGraduationCap, FaHome, FaSignOutAlt, FaTools } from 'react-icons/fa'
 import { MdDashboard, MdOutlineTravelExplore } from 'react-icons/md'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: MdDashboard },
   { to: '/admin/services', label: 'Services', icon: FaTools },
+  { to: '/admin/education', label: 'Education', icon: FaGraduationCap },
   { to: '/admin/projects', label: 'Projects', icon: FaFolderOpen },
   { to: '/admin/blog', label: 'Blog', icon: FaBlog },
   { to: '/admin/messages', label: 'Messages', icon: FaEnvelope },

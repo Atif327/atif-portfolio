@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FaHome, FaUser, FaServicestack, FaEnvelope, FaTimes, FaBars, FaBlog, FaNewspaper, FaUserShield, FaRobot } from 'react-icons/fa'
+import { FaHome, FaUser, FaServicestack, FaEnvelope, FaTimes, FaBars, FaBlog, FaNewspaper, FaUserShield, FaRobot, FaGraduationCap } from 'react-icons/fa'
 import { FolderKanban } from 'lucide-react'
 import { getSocialIcon } from '../admin/iconMaps'
 import { usePortfolioData } from '../context/PortfolioDataContext'
@@ -8,6 +8,7 @@ const items = [
   { id: 'home', label: 'Home', icon: FaHome },
   { id: 'about', label: 'About', icon: FaUser },
   { id: 'services', label: 'Services', icon: FaServicestack },
+  { id: 'education', label: 'Education', icon: FaGraduationCap },
   { id: 'projects', label: 'Projects', icon: FolderKanban },
   { id: 'assistant', label: 'AI Assistant', icon: FaRobot },
   { id: 'blog', label: 'Blog', icon: FaBlog },

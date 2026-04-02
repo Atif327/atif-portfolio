@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DEFAULT_BLOG_POSTS,
+  DEFAULT_EDUCATION,
   DEFAULT_MESSAGES,
   DEFAULT_PROJECTS,
   DEFAULT_SERVICES,
@@ -16,6 +17,7 @@ const STORAGE_KEYS = {
   socialLinks: 'portfolio_social_links_v1',
   messages: 'portfolio_messages_v1',
   blogs: 'portfolio_blogs_v1',
+  education: 'portfolio_education_v1',
 }
 
 const PortfolioDataContext = createContext(null)
@@ -71,6 +73,7 @@ export function PortfolioDataProvider({ children }) {
   const [socialLinks, setSocialLinks] = useState(() => parseStoredValue(STORAGE_KEYS.socialLinks, DEFAULT_SOCIAL_LINKS))
   const [messages, setMessages] = useState(() => parseStoredValue(STORAGE_KEYS.messages, DEFAULT_MESSAGES))
   const [blogs, setBlogs] = useState(() => parseStoredValue(STORAGE_KEYS.blogs, DEFAULT_BLOG_POSTS))
+  const [education, setEducation] = useState(() => parseStoredValue(STORAGE_KEYS.education, DEFAULT_EDUCATION))
   const hasSupabase = Boolean(supabase && typeof supabase.from === 'function')
   const servicesRef = useRef(services)
   const projectsRef = useRef(projects)
@@ -78,6 +81,7 @@ export function PortfolioDataProvider({ children }) {
   const socialLinksRef = useRef(socialLinks)
   const messagesRef = useRef(messages)
   const blogsRef = useRef(blogs)
+  const educationRef = useRef(education)
 
   useEffect(() => {
     servicesRef.current = services
@@ -102,6 +106,10 @@ export function PortfolioDataProvider({ children }) {
   useEffect(() => {
     blogsRef.current = blogs
   }, [blogs])
+
+  useEffect(() => {
+    educationRef.current = education
+  }, [education])
 
   const persist = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value))
@@ -264,6 +272,52 @@ export function PortfolioDataProvider({ children }) {
     updatedAt: row.updated_at,
   })
 
+  const mapAppEducationToDb = (item) => ({
+    id: item.id,
+    title: item.title,
+    institution: item.institution,
+    status: item.status,
+    academic_meta: Array.isArray(item.meta)
+      ? item.meta
+      : String(item.meta || '')
+          .split('|')
+          .map((value) => sanitizeText(value))
+          .filter(Boolean),
+    description: item.description,
+    tags: Array.isArray(item.tags)
+      ? item.tags
+      : String(item.tags || '')
+          .split(',')
+          .map((value) => sanitizeText(value))
+          .filter(Boolean),
+    duration: item.duration,
+    progress: toNumber(item.progress, 0),
+    icon: item.icon,
+    theme: item.theme,
+    display_order: toNumber(item.displayOrder, 0),
+    is_active: Boolean(item.isActive),
+    created_at: item.createdAt || new Date().toISOString(),
+    updated_at: item.updatedAt || new Date().toISOString(),
+  })
+
+  const mapDbEducationToApp = (row) => ({
+    id: row.id,
+    title: sanitizeText(row.title),
+    institution: sanitizeText(row.institution),
+    status: sanitizeText(row.status) || 'Milestone',
+    meta: Array.isArray(row.academic_meta) ? row.academic_meta.map((item) => sanitizeText(item)).filter(Boolean) : [],
+    description: sanitizeText(row.description),
+    tags: Array.isArray(row.tags) ? row.tags.map((item) => sanitizeText(item)).filter(Boolean) : [],
+    duration: sanitizeText(row.duration),
+    progress: toNumber(row.progress, 0),
+    icon: sanitizeText(row.icon) || 'graduation',
+    theme: sanitizeText(row.theme) || 'cyan',
+    displayOrder: toNumber(row.display_order, 0),
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })
+
   const refreshMessages = useCallback(async () => {
     if (!hasSupabase) return
 
@@ -285,7 +339,7 @@ export function PortfolioDataProvider({ children }) {
     let isCancelled = false
 
     async function loadPersistentData() {
-      const [settingsResult, messagesResult, servicesResult, projectsResult, socialLinksResult, blogsResult] = await Promise.all([
+      const [settingsResult, messagesResult, servicesResult, projectsResult, socialLinksResult, blogsResult, educationResult] = await Promise.all([
         supabase.from('app_settings').select('data').eq('id', 1).maybeSingle(),
         supabase
           .from('contact_messages')
@@ -306,6 +360,10 @@ export function PortfolioDataProvider({ children }) {
         supabase
           .from('blog_posts')
           .select('id, title, slug, excerpt, content, cover_image, category, target_keyword, seo_title, seo_description, tags, is_published, featured, display_order, published_at, created_at, updated_at')
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('portfolio_education')
+          .select('id, title, institution, status, academic_meta, description, tags, duration, progress, icon, theme, display_order, is_active, created_at, updated_at')
           .order('display_order', { ascending: true }),
       ])
 
@@ -397,6 +455,19 @@ export function PortfolioDataProvider({ children }) {
         } else if (blogsRef.current.length > 0) {
           await supabase.from('blog_posts').upsert(
             blogsRef.current.map(mapAppBlogToDb),
+            { onConflict: 'id' },
+          )
+        }
+      }
+
+      if (!educationResult.error && Array.isArray(educationResult.data)) {
+        if (educationResult.data.length > 0) {
+          const mappedEducation = educationResult.data.map(mapDbEducationToApp)
+          setEducation(mappedEducation)
+          persist(STORAGE_KEYS.education, mappedEducation)
+        } else if (educationRef.current.length > 0) {
+          await supabase.from('portfolio_education').upsert(
+            educationRef.current.map(mapAppEducationToDb),
             { onConflict: 'id' },
           )
         }
@@ -737,6 +808,67 @@ export function PortfolioDataProvider({ children }) {
     })
   }
 
+  const upsertEducation = async (record, id) => {
+    const now = new Date().toISOString()
+    const cleaned = {
+      id: id || getId('education'),
+      title: sanitizeText(record.title),
+      institution: sanitizeText(record.institution),
+      status: sanitizeText(record.status) || 'Milestone',
+      meta: Array.isArray(record.meta)
+        ? record.meta.map((value) => sanitizeText(value)).filter(Boolean)
+        : String(record.meta || '')
+            .split('|')
+            .map((value) => sanitizeText(value))
+            .filter(Boolean),
+      description: sanitizeText(record.description),
+      tags: Array.isArray(record.tags)
+        ? record.tags.map((value) => sanitizeText(value)).filter(Boolean)
+        : String(record.tags || '')
+            .split(',')
+            .map((value) => sanitizeText(value))
+            .filter(Boolean),
+      duration: sanitizeText(record.duration),
+      progress: toNumber(record.progress, 0),
+      icon: sanitizeText(record.icon) || 'graduation',
+      theme: sanitizeText(record.theme) || 'cyan',
+      displayOrder: toNumber(record.displayOrder, 0),
+      isActive: Boolean(record.isActive),
+      createdAt: id ? record.createdAt || now : now,
+      updatedAt: now,
+    }
+
+    if (hasSupabase) {
+      const { error } = await supabase
+        .from('portfolio_education')
+        .upsert(mapAppEducationToDb(cleaned), { onConflict: 'id' })
+      if (error) throw error
+    }
+
+    setEducation((prev) => {
+      const next = id
+        ? prev.map((item) => (item.id === id ? { ...item, ...cleaned } : item))
+        : [...prev, cleaned]
+      persist(STORAGE_KEYS.education, next)
+      return next
+    })
+
+    return cleaned
+  }
+
+  const deleteEducation = async (id) => {
+    if (hasSupabase) {
+      const { error } = await supabase.from('portfolio_education').delete().eq('id', id)
+      if (error) throw error
+    }
+
+    setEducation((prev) => {
+      const next = prev.filter((item) => item.id !== id)
+      persist(STORAGE_KEYS.education, next)
+      return next
+    })
+  }
+
   const resetAllData = () => {
     setServices(DEFAULT_SERVICES)
     setProjects(DEFAULT_PROJECTS)
@@ -744,12 +876,14 @@ export function PortfolioDataProvider({ children }) {
     setSocialLinks(DEFAULT_SOCIAL_LINKS)
     setMessages(DEFAULT_MESSAGES)
     setBlogs(DEFAULT_BLOG_POSTS)
+    setEducation(DEFAULT_EDUCATION)
     persist(STORAGE_KEYS.services, DEFAULT_SERVICES)
     persist(STORAGE_KEYS.projects, DEFAULT_PROJECTS)
     persist(STORAGE_KEYS.settings, DEFAULT_SETTINGS)
     persist(STORAGE_KEYS.socialLinks, DEFAULT_SOCIAL_LINKS)
     persist(STORAGE_KEYS.messages, DEFAULT_MESSAGES)
     persist(STORAGE_KEYS.blogs, DEFAULT_BLOG_POSTS)
+    persist(STORAGE_KEYS.education, DEFAULT_EDUCATION)
   }
 
   const sortedServices = useMemo(
@@ -786,6 +920,11 @@ export function PortfolioDataProvider({ children }) {
     [sortedBlogs],
   )
 
+  const sortedEducation = useMemo(
+    () => [...education].sort((a, b) => Number(a.displayOrder) - Number(b.displayOrder)),
+    [education],
+  )
+
   const value = useMemo(
     () => ({
       services,
@@ -794,10 +933,12 @@ export function PortfolioDataProvider({ children }) {
       socialLinks,
       messages,
       blogs,
+      education,
       sortedServices,
       sortedProjects,
       sortedSocialLinks,
       sortedBlogs,
+      sortedEducation,
       publishedBlogs,
       upsertService,
       deleteService,
@@ -805,6 +946,8 @@ export function PortfolioDataProvider({ children }) {
       deleteProject,
       upsertBlog,
       deleteBlog,
+      upsertEducation,
+      deleteEducation,
       updateSettings,
       upsertSocialLink,
       deleteSocialLink,
@@ -821,6 +964,7 @@ export function PortfolioDataProvider({ children }) {
       deleteService,
       deleteSocialLink,
       blogs,
+      education,
       messages,
       publishedBlogs,
       projects,
@@ -829,12 +973,14 @@ export function PortfolioDataProvider({ children }) {
       settings,
       socialLinks,
       sortedBlogs,
+      sortedEducation,
       sortedProjects,
       sortedServices,
       sortedSocialLinks,
       updateMessageStatus,
       updateSettings,
       upsertBlog,
+      upsertEducation,
       upsertProject,
       upsertService,
       upsertSocialLink,

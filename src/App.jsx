@@ -11,6 +11,7 @@ import ProtectedRoute from './admin/ProtectedRoute'
 const Home = React.lazy(() => import('./pages/Home'))
 const About = React.lazy(() => import('./pages/About'))
 const Services = React.lazy(() => import('./pages/Services'))
+const Education = React.lazy(() => import('./pages/Education'))
 const Projects = React.lazy(() => import('./pages/Projects'))
 const ProjectCaseStudy = React.lazy(() => import('./pages/ProjectCaseStudy'))
 const ProgrammaticSeoPage = React.lazy(() => import('./pages/ProgrammaticSeoPage'))
@@ -25,6 +26,7 @@ const AdminLoginPage = React.lazy(() => import('./pages/admin/AdminLoginPage'))
 const AdminDashboardPage = React.lazy(() => import('./pages/admin/AdminDashboardPage'))
 const AdminServicesPage = React.lazy(() => import('./pages/admin/AdminServicesPage'))
 const AdminProjectsPage = React.lazy(() => import('./pages/admin/AdminProjectsPage'))
+const AdminEducationPage = React.lazy(() => import('./pages/admin/AdminEducationPage'))
 const AdminBlogPage = React.lazy(() => import('./pages/admin/AdminBlogPage'))
 const AdminMessagesPage = React.lazy(() => import('./pages/admin/AdminMessagesPage'))
 const AdminSettingsPage = React.lazy(() => import('./pages/admin/AdminSettingsPage'))
@@ -39,6 +41,7 @@ export default function App(){
     if (location.pathname === '/') return 'home'
     if (location.pathname.startsWith('/about')) return 'about'
     if (location.pathname.startsWith('/services')) return 'services'
+    if (location.pathname.startsWith('/education')) return 'education'
     if (location.pathname.startsWith('/projects')) return 'projects'
     if (location.pathname.startsWith('/assistant')) return 'assistant'
     if (location.pathname.startsWith('/blog')) return 'blog'
@@ -52,6 +55,7 @@ export default function App(){
       home: '/',
       about: '/about',
       services: '/services',
+      education: '/education',
       projects: '/projects',
       assistant: '/assistant',
       blog: '/blog',
@@ -84,6 +88,14 @@ export default function App(){
               element={
                 <ProtectedRoute>
                   <AdminServicesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/education"
+              element={
+                <ProtectedRoute>
+                  <AdminEducationPage />
                 </ProtectedRoute>
               }
             />
@@ -143,6 +155,7 @@ export default function App(){
                   <Route path="/" element={<Home />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/services" element={<Services />} />
+                  <Route path="/education" element={<Education />} />
                   <Route path="/projects" element={<Projects />} />
                   <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
                   <Route path="/assistant" element={<Assistant />} />

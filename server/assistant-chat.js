@@ -1,13 +1,20 @@
 const express = require('express')
-const { getKnowledgeReply, persistLearningCandidates } = require('./assistant-knowledge')
+const { createClient } = require('./genaiClient')
 
 const router = express.Router()
+const responseCache = new Map()
+const CACHE_TTL_MS = 60 * 1000
+const PORTFOLIO_MAX_WAIT_MS = Number(process.env.PORTFOLIO_MAX_WAIT_MS || 900)
+const GENERAL_MAX_WAIT_MS = Number(process.env.GENERAL_MAX_WAIT_MS || 3200)
 
-const assistantProfile = {
-  name: 'Atif Ayyoub',
-  title: 'AI Web & Custom Software Developer',
-  email: 'atifayyoub82@gmail.com',
-  location: 'Pakistan',
+const portfolioFacts = {
+  profile: {
+    name: 'Atif Ayyoub',
+    title: 'AI Web & Custom Software Developer',
+    location: 'Pakistan',
+    about: 'Focused on practical AI, scalable web apps, and polished digital products.',
+    email: 'atifayyoub82@gmail.com',
+  },
   services: [
     'AI web app development',
     'Custom software development',
@@ -16,43 +23,39 @@ const assistantProfile = {
     'Portfolio websites',
     'Business dashboards',
   ],
+  skills: ['Laravel', 'PHP', 'Flutter', 'JavaScript', 'MySQL', 'AI integration', 'REST APIs', 'Responsive UI'],
   projects: [
     {
-      title: 'Wallpaper Hub',
-      summary: 'A Laravel-powered wallpaper browsing and download platform.',
-      problem: 'Users need a simple place to discover wallpapers by category.',
-      solution: 'Built a categorized browsing experience with search, filtering, and download support.',
-      tech: ['Laravel', 'PHP', 'MySQL', 'Bootstrap'],
+      name: 'Wallpaper Hub',
+      category: 'Web App',
+      tech_stack: ['Laravel', 'PHP', 'MySQL', 'Bootstrap'],
+      summary: 'A Laravel-powered web app for browsing, categorizing, and downloading high-quality wallpapers.',
+      problem: 'Users need a simple platform to discover and download wallpapers by category.',
+      solution: 'Built a categorized wallpaper platform with search, filtering, and download functionality.',
       features: ['Wallpaper browsing', 'Category filtering', 'Download support', 'Responsive design'],
       role: 'Full-stack developer',
       status: 'Completed',
     },
     {
-      title: 'Task Manager',
-      summary: 'A Flutter productivity app for managing tasks and reminders.',
-      problem: 'Users need a simple way to track daily tasks on mobile.',
-      solution: 'Built a lightweight task flow with reminders and clean mobile UI.',
-      tech: ['Flutter', 'Dart', 'SQLite'],
-      features: ['Task tracking', 'Reminders', 'Mobile-first UI'],
-      role: 'Mobile app developer',
-      status: 'Completed',
-    },
-    {
-      title: 'Student Evaluation System',
-      summary: 'A React and Node.js assessment platform for evaluations.',
-      problem: 'Institutions need a structured way to manage assessments and results.',
-      solution: 'Built a web system for evaluation workflows and reporting.',
-      tech: ['React', 'Node.js', 'JavaScript', 'SQLite'],
-      features: ['Assessment flow', 'Results management', 'Responsive dashboard'],
-      role: 'Full-stack developer',
+      name: 'Pixel Resize Pro',
+      category: 'Utility Tool',
+      tech_stack: ['JavaScript', 'Web App'],
+      summary: 'An image resize tool that lets users resize images quickly without losing quality.',
+      problem: 'Users need a quick and simple image resizing tool.',
+      solution: 'Built a lightweight image resizer with a clean workflow and fast output.',
+      features: ['Fast image resizing', 'Quality preservation', 'Simple upload flow', 'Instant output'],
+      role: 'Developer',
       status: 'Completed',
     },
   ],
-  skills: ['React', 'Node.js', 'JavaScript', 'OpenAI', 'Flutter', 'Laravel', 'PHP', 'MySQL', 'Supabase'],
   faq: [
     {
       question: 'What services do you offer?',
-      answer: 'Atif offers AI web app development, custom software solutions, Laravel development, Flutter apps, portfolio websites, and business dashboards.',
+      answer: 'Atif offers AI web app development, custom software solutions, Laravel development, Flutter apps, and modern responsive web interfaces.',
+    },
+    {
+      question: 'How many projects have you built?',
+      answer: 'Atif has built 9 portfolio projects.',
     },
     {
       question: 'Are you available for freelance work?',
@@ -61,300 +64,287 @@ const assistantProfile = {
   ],
 }
 
-function normalize(value) {
-  return String(value || '').toLowerCase().trim()
-}
+const portfolioPromptInstructions = `You are Atif Ayyoub’s AI assistant integrated into his portfolio website.
 
-function unique(values) {
-  return [...new Set(values.filter(Boolean))]
-}
+You can answer BOTH:
+1. Portfolio-related questions about Atif
+2. General questions like a normal AI assistant
 
-function formatBullets(items) {
-  return items.map((item) => `- ${item}`).join('\n')
-}
+INTENT HANDLING:
+First determine user intent:
+A. Portfolio-related
+B. General question
+C. Greeting
+D. Follow-up
 
-function matches(text, patterns) {
-  return patterns.some((pattern) => pattern.test(text))
-}
+BEHAVIOR RULES:
+1. If GREETING: reply naturally in 1-2 lines, no full portfolio summary.
+2. If PORTFOLIO: use ONLY provided portfolio data.
+3. For missing portfolio facts say exactly: "I don’t have that information in the portfolio data yet."
+4. If GENERAL: answer normally as a professional AI assistant.
+5. Never reject general questions due to missing portfolio data.
+6. For follow-ups, use conversation history. If ambiguous across multiple projects, ask: "Which project would you like me to summarize?"
 
-function findProjectByTitle(text) {
-  return assistantProfile.projects.filter((project) => normalize(text).includes(normalize(project.title)))
-}
+STYLE:
+- Professional, concise, helpful.
+- For substantive portfolio questions prefer:
+Quick answer: [1 sentence]
 
-function collectProjectMentions(history) {
-  if (!Array.isArray(history)) return []
-  const mentions = []
-  for (const entry of history.slice().reverse()) {
-    const messageText = normalize(entry?.content)
-    if (!messageText) continue
-    for (const project of assistantProfile.projects) {
-      if (messageText.includes(normalize(project.title))) {
-        mentions.push(project.title)
-      }
-    }
-  }
-  return unique(mentions)
-}
+Details:
+- [point]
+- [point]
+- [point]
 
-function resolveProjectContext(message, history, context = {}) {
-  // Priority 1: Explicit selectedProject from frontend state
-  if (context.selectedProject) {
-    const selected = assistantProfile.projects.find((project) => project.title === context.selectedProject)
-    if (selected) {
-      console.log(`✓ Resolved via context.selectedProject: ${context.selectedProject}`)
-      return { selected, candidates: [] }
-    }
-  }
+Next step:
+[optional]
 
-  // Priority 2: Direct matches in current message
-  const directMatches = findProjectByTitle(message)
-  if (directMatches.length === 1) {
-    console.log(`✓ Resolved via direct match: ${directMatches[0].title}`)
-    return { selected: directMatches[0], candidates: [] }
-  }
-  if (directMatches.length > 1) {
-    console.log(`⚠ Multiple direct matches: ${directMatches.map((p) => p.title).join(', ')}`)
-    return { selected: null, candidates: directMatches.map((project) => project.title) }
-  }
+Do not automatically summarize the portfolio unless asked.`
 
-  // Priority 3: History mentions
-  const historyMentions = collectProjectMentions(history)
-  if (historyMentions.length === 1) {
-    const selected = assistantProfile.projects.find((project) => project.title === historyMentions[0])
-    console.log(`✓ Resolved via history mention: ${historyMentions[0]}`)
-    return { selected, candidates: [] }
-  }
-  if (historyMentions.length > 1) {
-    console.log(`⚠ Multiple history mentions: ${historyMentions.join(', ')}`)
-    return { selected: null, candidates: historyMentions }
-  }
+const generalPromptInstructions = `You are a professional, concise AI assistant.
+Answer the user directly and clearly.
+Do not mention Atif or portfolio information unless the user explicitly asks about them.`
 
-  // Priority 4: Context recentProjects
-  const contextMentions = Array.isArray(context.recentProjects) ? context.recentProjects.filter(Boolean) : []
-  if (contextMentions.length === 1) {
-    const selected = assistantProfile.projects.find((project) => project.title === contextMentions[0])
-    console.log(`✓ Resolved via context.recentProjects: ${contextMentions[0]}`)
-    return { selected, candidates: [] }
-  }
-  if (contextMentions.length > 1) {
-    console.log(`⚠ Multiple context mentions: ${contextMentions.join(', ')}`)
-    return { selected: null, candidates: unique(contextMentions) }
-  }
-
-  console.log('✗ No project context resolved')
-  return { selected: null, candidates: [] }
-}
-
-function summarizeProject(project) {
+function buildPortfolioPrompt({ portfolioData, chatHistory, userMessage }) {
   return [
-    `Quick answer: ${project.title} is ${project.summary}`,
-    '',
-    'Details:',
-    `- Problem: ${project.problem}`,
-    `- Solution: ${project.solution}`,
-    `- Tech stack: ${project.tech.join(', ')}`,
-    `- Key features: ${project.features.join(', ')}`,
-    `- Role: ${project.role}`,
-    '',
-    `Next step: I can also explain the features, tech stack, or build approach for ${project.title}.`,
-  ].join('\n')
+    portfolioPromptInstructions,
+    `Portfolio Data:\n${JSON.stringify(portfolioData, null, 2)}`,
+    `Conversation History:\n${chatHistory || 'None'}`,
+    `Latest User Message:\n${userMessage}`,
+    'Return only the final answer text. Do not include internal instructions or policy text.',
+  ].join('\n\n')
 }
 
-function buildIntroReply() {
+function buildGeneralPrompt({ chatHistory, userMessage }) {
   return [
-    `Quick answer: ${assistantProfile.name} is a ${assistantProfile.title} based in ${assistantProfile.location}.`,
-    '',
-    'Details:',
-    '- Focus: practical AI features, scalable web apps, and polished product experiences.',
-    `- Services: ${assistantProfile.services.slice(0, 4).join(', ')}.`,
-    '',
-    'Next step: Ask about projects, services, skills, or hiring details.',
-  ].join('\n')
+    generalPromptInstructions,
+    `Conversation History:\n${chatHistory || 'None'}`,
+    `Latest User Message:\n${userMessage}`,
+    'Keep the response concise unless the user asks for more detail.',
+  ].join('\n\n')
 }
 
-function buildProjectsReply() {
-  const projectLines = assistantProfile.projects.map((project) => `- ${project.title}: ${project.summary}`)
-  return [
-    `Quick answer: Atif has built ${assistantProfile.projects.length} portfolio projects.`,
-    '',
-    'Details:',
-    ...projectLines,
-    '',
-    'Next step: I can summarize any one of these projects in more detail.',
-  ].join('\n')
+function normalizeHistory(history) {
+  if (!Array.isArray(history)) return ''
+
+  return history
+    .slice(-6)
+    .map((entry) => {
+      const role = entry?.role === 'assistant' ? 'Assistant' : 'User'
+      const text = String(entry?.content || entry?.text || '').trim()
+      return text ? `${role}: ${text}` : ''
+    })
+    .filter(Boolean)
+    .join('\n')
 }
 
-function buildServicesReply() {
-  return [
-    `Quick answer: Atif offers ${assistantProfile.services.length} core services.`,
-    '',
-    'Details:',
-    ...formatBullets(assistantProfile.services),
-    '',
-    `Next step: Share your scope, timeline, and budget, or email ${assistantProfile.email}.`,
-  ].join('\n')
+function looksLikeGreeting(message) {
+  return /^(hi|hello|hey|yo|salam|assalam o alaikum|good\s*(morning|afternoon|evening))\b[!. ]*$/i.test(message)
 }
 
-function buildSkillsReply() {
-  return [
-    `Quick answer: Atif works with ${assistantProfile.skills.slice(0, 6).join(', ')} and related tooling.`,
-    '',
-    'Details:',
-    '- React and Node.js for web apps and APIs.',
-    '- Laravel and PHP for custom software workflows.',
-    '- Flutter for mobile apps and Supabase for backend support.',
-    '',
-    'Next step: Ask me which project uses a specific technology.',
-  ].join('\n')
+function looksLikeFollowUp(message) {
+  return /\b(summarize it|summarize|tell me more|explain that|what tech was used|how was it built|is it completed|that one|this one|it)\b/i.test(message)
 }
 
-function buildFaqReply(text) {
-  const match = assistantProfile.faq.find((item) => normalize(text).includes(normalize(item.question)))
-  if (!match) return null
-  return [
-    `Quick answer: ${match.answer}`,
-    '',
-    'Next step: I can also help with a project summary or hiring question.',
-  ].join('\n')
+function detectPortfolioIntent(message) {
+  const text = String(message || '').toLowerCase()
+  const portfolioKeywords = [
+    'atif', 'portfolio', 'project', 'service', 'skills', 'hire', 'hiring', 'contact', 'blog',
+    'wallpaper hub', 'pixel resize pro', 'experience', 'availability', 'freelance',
+  ]
+
+  return portfolioKeywords.some((keyword) => text.includes(keyword))
 }
 
-function extractRequestedProjectReference(text) {
-  const source = String(text || '').trim()
-  const pattern = /\b(?:summarize|summary|explain|tell me about|tell me more about|tell me more|what stack was used for|what stack was used|what stack|what features does it have|what features|what problem does it solve)\b\s*(.*)$/i
-  const match = source.match(pattern)
-  return match && match[1] ? match[1].trim() : ''
+function detectMentionedProjects(history) {
+  const historyText = String(history || '').toLowerCase()
+  const names = portfolioFacts.projects.map((project) => project.name)
+  return names.filter((name) => historyText.includes(name.toLowerCase()))
 }
 
-function looksLikeProjectReference(text) {
-  return /\b(project|app|system|clone|hub|manager|tool|portal|website|dashboard|platform)\b/i.test(String(text || ''))
+function getCachedReply(cacheKey) {
+  const cached = responseCache.get(cacheKey)
+  if (!cached) return null
+  if (Date.now() - cached.timestamp > CACHE_TTL_MS) {
+    responseCache.delete(cacheKey)
+    return null
+  }
+  return cached.reply
 }
 
-function buildReply(message, history = [], context = {}) {
-  const text = normalize(message)
-  if (!text) return 'Ask me about projects, services, skills, hiring, or blog topics.'
+function setCachedReply(cacheKey, reply) {
+  responseCache.set(cacheKey, { reply, timestamp: Date.now() })
+}
 
-  const followUpIntent = matches(text, [
-    /\b(summarize|summary|explain|tell me more|what is it|what does it do|how was it built|what tech was used|what problem does it solve)\b/,
-    /\b(it|that project|this project)\b/,
-  ])
+function extractGeminiText(response) {
+  if (!response) return ''
 
-  if (matches(text, [/\b(hi|hello|hey|good morning|good evening)\b/])) {
-    return 'Quick answer: I can help with Atif Ayyoub\'s projects, services, skills, and hiring details.\n\nNext step: Ask about a specific project or service for a focused answer.'
+  const directText = typeof response.text === 'string' ? response.text.trim() : ''
+  if (directText) return directText
+
+  const candidateParts = Array.isArray(response.candidates)
+    ? response.candidates.flatMap((candidate) => candidate?.content?.parts || [])
+    : []
+
+  const partsText = candidateParts
+    .map((part) => (typeof part?.text === 'string' ? part.text : ''))
+    .filter(Boolean)
+    .join('\n')
+    .trim()
+
+  if (partsText) return partsText
+
+  const outputText = Array.isArray(response.output)
+    ? response.output
+        .flatMap((item) => item?.content?.parts || [])
+        .map((part) => (typeof part?.text === 'string' ? part.text : ''))
+        .filter(Boolean)
+        .join('\n')
+        .trim()
+    : ''
+
+  return outputText
+}
+
+function instantPortfolioReply(message) {
+  const text = String(message || '').toLowerCase()
+
+  if (/\b(who is atif|about atif|introduce|summary of atif)\b/.test(text)) {
+    return `Quick answer: ${portfolioFacts.profile.name} is an ${portfolioFacts.profile.title} based in ${portfolioFacts.profile.location}.\n\nDetails:\n- ${portfolioFacts.profile.about}\n- Core services include ${portfolioFacts.services.slice(0, 3).join(', ')}.\n- Key skills include ${portfolioFacts.skills.slice(0, 4).join(', ')}.\n\nNext step:\nWould you like a project summary or service breakdown?`
   }
 
-  if (matches(text, [/\b(who are you|who is atif|about atif|tell me about atif|introduce yourself)\b/])) {
-    return buildIntroReply()
+  if (/\b(project|projects|built|portfolio work)\b/.test(text)) {
+    const projectLines = portfolioFacts.projects.map((project) => `- ${project.name}: ${project.summary}`).join('\n')
+    return `Quick answer: Atif has built ${portfolioFacts.projects.length} highlighted portfolio projects in this assistant dataset.\n\nDetails:\n${projectLines}\n\nNext step:\nTell me which project you want to explore in depth.`
   }
 
-  // Resolve project context first (prioritizes selectedProject from frontend)
-  const projectContext = resolveProjectContext(message, history, context)
-
-  // If a specific project is selected, either by explicit state or unique identification, summarize it
-  if (projectContext.selected) {
-    // Hard safeguard: never let fallback logic override an explicit project summary on follow-up
-    if (followUpIntent || findProjectByTitle(message).length > 0) {
-      return summarizeProject(projectContext.selected)
-    }
+  if (/\b(service|services|offer|offering|hire|hiring)\b/.test(text)) {
+    const serviceLines = portfolioFacts.services.map((service) => `- ${service}`).join('\n')
+    return `Quick answer: Atif offers AI, custom software, web, and app development services.\n\nDetails:\n${serviceLines}\n\nNext step:\nShare your project scope and I can suggest the most relevant service.`
   }
 
-  // If follow-up but no single project selected yet, handle ambiguity
-  if (followUpIntent) {
-    const requestedProject = extractRequestedProjectReference(message)
-
-    if (requestedProject && looksLikeProjectReference(requestedProject) && projectContext.candidates.length === 0) {
-      return 'That project is not in the portfolio.'
-    }
-
-    if (projectContext.candidates.length > 1) {
-      return `Which project would you like me to summarize: ${projectContext.candidates.join(', ')}?`
-    }
-
-    return `I can summarize a project, but I need the project name first. Available projects: ${assistantProfile.projects.map((project) => project.title).join(', ')}.`
+  if (/\b(skill|skills|tech|stack|technology|tools)\b/.test(text)) {
+    return `Quick answer: Atif works with ${portfolioFacts.skills.slice(0, 5).join(', ')} and related tools.\n\nDetails:\n- Full skill set includes ${portfolioFacts.skills.join(', ')}.\n- Focus areas include AI integration, REST APIs, and responsive UI.\n- Project stacks vary by product type and goals.\n\nNext step:\nAsk for the tech stack of a specific project.`
   }
 
-  if (matches(text, [/\b(projects?|case studies|built|portfolio)\b/])) {
-    return buildProjectsReply()
+  if (/\b(contact|email|reach|availability|available|freelance)\b/.test(text)) {
+    return `Quick answer: You can reach Atif at ${portfolioFacts.profile.email}.\n\nDetails:\n- Atif is based in ${portfolioFacts.profile.location}.\n- He is available for freelance and custom software work depending on scope and timeline.\n- Use the contact form or email for faster response.\n\nNext step:\nIf you share your timeline and budget, I can help draft a concise inquiry message.`
   }
 
-  if (matches(text, [/\b(services?|offer|provide|hire)\b/])) {
-    return buildServicesReply()
+  return null
+}
+
+function instantGeneralKnowledgeReply(message) {
+  const text = String(message || '').toLowerCase().trim()
+
+  const knowledgeMap = {
+    'web development': 'Web development is the process of building websites and web applications. It includes frontend UI, backend logic, databases, and APIs.',
+    'machine learning': 'Machine learning is a branch of AI where systems learn patterns from data to make predictions or decisions without being explicitly programmed for every rule.',
+    'artificial intelligence': 'Artificial intelligence is the field of creating systems that can perform tasks that usually require human intelligence, such as reasoning, language understanding, and decision-making.',
+    'ai': 'AI is the field of building systems that can understand information, reason, and generate useful outputs such as text, images, or predictions.',
+    'api': 'An API is a set of rules that allows different software systems to communicate with each other by sending requests and receiving structured responses.',
+    'frontend development': 'Frontend development focuses on the user interface and interactions in a browser, usually using HTML, CSS, and JavaScript frameworks.',
+    'backend development': 'Backend development handles server logic, databases, authentication, and APIs that power applications behind the scenes.',
+    'full stack development': 'Full-stack development combines frontend and backend development to build complete end-to-end applications.',
+    'cloud computing': 'Cloud computing is the delivery of computing services like servers, storage, and databases over the internet on demand.',
+    'database': 'A database is a structured system for storing, managing, and retrieving data efficiently.',
   }
 
-  if (matches(text, [/\b(skills?|stack|technologies?|tech|tools)\b/])) {
-    return buildSkillsReply()
+  const whatIsMatch = text.match(/^what is\s+(.+?)\??$/i)
+  if (!whatIsMatch) return null
+
+  const topic = whatIsMatch[1].trim().toLowerCase()
+  const direct = knowledgeMap[topic]
+
+  if (direct) {
+    return `Quick answer: ${direct}\n\nDetails:\n- It is commonly used in modern software and product development.\n- Understanding fundamentals helps you choose the right tools and architecture.\n- Practical examples make the concept easier to apply.\n\nNext step:\nIf you want, I can explain ${topic} with a real project-style example.`
   }
 
-  if (matches(text, [/\b(contact|email|reach|message|phone|linkedin|github)\b/])) {
-    return [
-      `Quick answer: The best direct contact is ${assistantProfile.email}.`,
-      '',
-      'Details:',
-      '- You can also use the portfolio contact form for project inquiries.',
-      '- Share your scope, timeline, and goals for a faster reply.',
-      '',
-      'Next step: I can help summarize a project or explain services.',
-    ].join('\n')
-  }
-
-  if (matches(text, [/\b(ai|openai|assistant|automation|chatbot)\b/])) {
-    return [
-      'Quick answer: Atif builds practical AI integrations and assistants for real product workflows.',
-      '',
-      'Details:',
-      '- The focus is on useful, maintainable AI features.',
-      '- Common use cases include chat assistants, automation, and content workflows.',
-      '',
-      'Next step: Ask which project or service uses AI.',
-    ].join('\n')
-  }
-
-  const faqReply = buildFaqReply(text)
-  if (faqReply) return faqReply
-
-  return [
-    `Quick answer: ${assistantProfile.name} is a ${assistantProfile.title}.`,
-    '',
-    'Details:',
-    '- I can answer questions about projects, services, skills, hiring, and contact info.',
-    '- If you mention a specific project, I can summarize it.',
-    '',
-    'Next step: Try asking about a project by name or say “summarize it” after selecting one.',
-  ].join('\n')
+  return null
 }
 
 router.post('/chat', async (req, res) => {
   try {
-    const message = req.body?.message
-    const history = Array.isArray(req.body?.history) ? req.body.history : []
-    const context = req.body?.context && typeof req.body.context === 'object' ? req.body.context : {}
-    const sessionId = req.body?.sessionId || context.sessionId || null
-    const currentTopic = req.body?.currentTopic || context.currentTopic || null
-
-    if (!message || typeof message !== 'string' || !message.trim()) {
+    const message = String(req.body?.message || '').trim()
+    if (!message) {
       return res.status(400).json({ error: 'Message is required.' })
     }
 
-    const learningContext = { ...context, sessionId, currentTopic }
-    const knowledgeReply = await getKnowledgeReply({ message, context: learningContext, assistantProfile })
-    const reply = knowledgeReply || buildReply(message, history, learningContext)
+    const history = normalizeHistory(req.body?.history)
+    const isGreeting = looksLikeGreeting(message)
+    const isFollowUp = looksLikeFollowUp(message)
+    const isPortfolio = detectPortfolioIntent(message)
 
-    await persistLearningCandidates({
-      message,
-      reply,
-      context: learningContext,
-      assistantProfile,
-    })
+    if (isGreeting) {
+      return res.json({ reply: 'Hi! How can I help you today?' })
+    }
 
-    return res.json({
-      reply,
-      assistant: assistantProfile,
-      learning: {
-        usedApprovedKnowledge: Boolean(knowledgeReply),
+    const mentionedProjects = detectMentionedProjects(history)
+    if (isFollowUp && mentionedProjects.length > 1) {
+      return res.json({ reply: 'Which project would you like me to summarize?' })
+    }
+
+    const mode = isPortfolio || (isFollowUp && mentionedProjects.length > 0) ? 'portfolio' : 'general'
+    const cacheKey = `${mode}:${message.toLowerCase()}`
+    const cachedReply = getCachedReply(cacheKey)
+    if (cachedReply) {
+      return res.json({ reply: cachedReply })
+    }
+
+    if (mode === 'portfolio') {
+      const fastPortfolioReply = instantPortfolioReply(message)
+      if (fastPortfolioReply) {
+        setCachedReply(cacheKey, fastPortfolioReply)
+        return res.json({ reply: fastPortfolioReply })
+      }
+    } else {
+      const fastGeneralReply = instantGeneralKnowledgeReply(message)
+      if (fastGeneralReply) {
+        setCachedReply(cacheKey, fastGeneralReply)
+        return res.json({ reply: fastGeneralReply })
+      }
+    }
+
+    const prompt = mode === 'portfolio'
+      ? buildPortfolioPrompt({
+          portfolioData: portfolioFacts,
+          chatHistory: history,
+          userMessage: message,
+        })
+      : buildGeneralPrompt({
+          chatHistory: history,
+          userMessage: message,
+        })
+
+    const ai = createClient()
+    const maxWaitMs = mode === 'portfolio' ? PORTFOLIO_MAX_WAIT_MS : GENERAL_MAX_WAIT_MS
+
+    const geminiPromise = ai.models.generateContent({
+      model: process.env.GEMINI_FAST_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        temperature: 0.2,
+        maxOutputTokens: mode === 'portfolio' ? 220 : 320,
       },
     })
+
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve({ __timedOut: true }), maxWaitMs)
+    })
+
+    const response = await Promise.race([geminiPromise, timeoutPromise])
+
+    const fallback = mode === 'portfolio'
+      ? 'I don’t have that information in the portfolio data yet.'
+      : 'I am still thinking about that. Please retry and I will answer in more detail.'
+
+    const modelReply = response?.__timedOut ? '' : extractGeminiText(response)
+    const reply = modelReply || fallback
+    setCachedReply(cacheKey, reply)
+
+    return res.json({ reply })
   } catch (error) {
     console.error('assistant-chat route error:', error)
-    return res.status(500).json({ error: 'Unable to generate assistant response.' })
+    return res.status(500).json({ error: 'Unable to generate Gemini response.' })
   }
 })
 

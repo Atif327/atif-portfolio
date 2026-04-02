@@ -1,0 +1,311 @@
+.education-section {
+  position: relative;
+  padding: 80px 0 112px;
+}
+
+.education-container {
+  width: min(1152px, 100%);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.education-header {
+  text-align: center;
+}
+
+.education-eyebrow {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(165, 243, 252, 0.78);
+}
+
+.education-heading {
+  margin-top: 12px;
+  font-size: clamp(2.2rem, 4.6vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #818cf8, #67e8f9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.education-intro {
+  width: min(720px, 100%);
+  margin: 16px auto 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(1rem, 1.8vw, 1.1rem);
+  line-height: 1.85;
+}
+
+.education-timeline-wrap {
+  position: relative;
+  margin-top: 100px;
+}
+
+.education-timeline-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 24px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.education-timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 100px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.education-timeline-item {
+  position: relative;
+  padding-left: 96px;
+}
+
+.education-timeline-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+.education-middle-spacer,
+.education-year-wrap,
+.education-card-desktop {
+  display: none;
+}
+
+.education-mobile-content {
+  display: block;
+}
+
+.education-date-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 16px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.education-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(11, 18, 32, 0.86);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(103, 232, 249, 0.08),
+    0 0 26px rgba(99, 102, 241, 0.14),
+    0 0 40px rgba(34, 211, 238, 0.07);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.education-card-mobile {
+  margin-top: 14px;
+  padding: 24px;
+}
+
+.education-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(103, 232, 249, 0.34);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(103, 232, 249, 0.16),
+    0 0 34px rgba(99, 102, 241, 0.22),
+    0 0 54px rgba(34, 211, 238, 0.12);
+}
+
+.education-card-title {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: clamp(1.18rem, 2vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.education-card-institution {
+  margin: 0 0 8px;
+  color: rgba(165, 243, 252, 0.9);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.education-card-meta {
+  margin: 0 0 10px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.95rem;
+}
+
+.education-status-badge {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.education-card-description {
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.98rem;
+  line-height: 1.75;
+}
+
+.education-progress-wrap {
+  margin-top: 16px;
+}
+
+.education-progress-track {
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.education-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #818cf8, #67e8f9);
+}
+
+.education-node-wrap {
+  position: absolute;
+  left: 24px;
+  top: 2px;
+  transform: translateX(-50%);
+}
+
+.education-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 0.22),
+    0 0 28px rgba(99, 102, 241, 0.26),
+    0 0 42px rgba(34, 211, 238, 0.14);
+  animation: educationNodePulse 3.6s ease-in-out infinite;
+}
+
+.education-node-icon {
+  width: 28px;
+  height: 28px;
+  color: #0b1220;
+}
+
+.education-node-image {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+@keyframes educationNodePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 20px rgba(255, 255, 255, 0.22),
+      0 0 28px rgba(99, 102, 241, 0.26),
+      0 0 42px rgba(34, 211, 238, 0.14);
+  }
+
+  50% {
+    transform: scale(1.03);
+    box-shadow:
+      0 0 24px rgba(255, 255, 255, 0.24),
+      0 0 34px rgba(99, 102, 241, 0.3),
+      0 0 48px rgba(34, 211, 238, 0.18);
+  }
+}
+
+@media (min-width: 1024px) {
+  .education-container {
+    padding: 0 32px;
+  }
+
+  .education-timeline-spine {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .education-timeline-item {
+    padding-left: 0;
+  }
+
+  .education-timeline-grid {
+    grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+
+  .education-mobile-content {
+    display: none;
+  }
+
+  .education-card-desktop {
+    display: block;
+    padding: 24px;
+  }
+
+  .education-card-left {
+    margin-right: 24px;
+  }
+
+  .education-card-right {
+    margin-left: 24px;
+  }
+
+  .education-middle-spacer {
+    display: block;
+  }
+
+  .education-year-wrap {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+
+  .education-year-left {
+    justify-content: flex-end;
+  }
+
+  .education-year-pill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: #0b1220;
+    padding: 8px 20px;
+    color: #ffffff;
+    font-size: 1.95rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .education-node-wrap {
+    left: 50%;
+    top: 0;
+  }
+}

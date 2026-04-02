@@ -200,6 +200,63 @@ export const DEFAULT_PROJECTS = [
   },
 ]
 
+export const DEFAULT_EDUCATION = [
+  {
+    id: 'education-bse',
+    title: 'Bachelor of Science in Software Engineering',
+    institution: 'Comsats University Islamabad, Vehari Campus',
+    status: 'Ongoing',
+    meta: ['CGPA 3.48', 'Spring 2025', 'Ongoing'],
+    description:
+      'Built strong technical and analytical skills through software engineering education, including data structures, artificial intelligence, information security, computer networks, and core software engineering coursework.',
+    duration: '2021 - Present',
+    progress: 88,
+    tags: ['Data Structures', 'Artificial Intelligence', 'Information Security', 'Computer Networks', 'Software Engineering'],
+    icon: 'graduation',
+    theme: 'cyan',
+    displayOrder: 1,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'education-fsc',
+    title: 'F.Sc. Pre-Medical',
+    institution: 'Aspire College, Mailsi',
+    status: 'Completed',
+    meta: ['Marks 962 out of 1100', 'Completed'],
+    description:
+      'Built a solid academic background in biology, physics, and chemistry while developing problem-solving ability, discipline, and analytical thinking.',
+    duration: '2019 - 2021',
+    progress: 92,
+    tags: ['Biology', 'Physics', 'Chemistry'],
+    icon: 'atom',
+    theme: 'indigo',
+    displayOrder: 2,
+    isActive: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'education-matric',
+    title: 'Matriculation Science',
+    institution: 'Rehan Public Boys High School',
+    status: 'Completed',
+    meta: ['Marks 1013 out of 1100', 'Completed'],
+    description:
+      'Developed strong foundations in science and mathematics with excellent academic performance and consistent learning discipline.',
+    duration: '2017 - 2019',
+    progress: 95,
+    tags: ['Science', 'Mathematics'],
+    icon: 'book',
+    theme: 'violet',
+    displayOrder: 3,
+    isActive: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+]
+
 export const DEFAULT_BLOG_POSTS = [
   {
     id: 'blog-ai-tools-2026',
