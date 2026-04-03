@@ -30,7 +30,7 @@ export default function ProjectCard({ project, large = false, className = '' }){
           <div className="project-card-media-overlay" />
           <div className="project-card-media-content">
             {project.image
-              ? <img src={project.image} alt={`${project.title} AI web development project for ${project.category || 'modern apps'}`} loading="lazy" decoding="async" className="project-card-image object-cover w-full h-full" />
+              ? <img src={project.image} alt={`${project.title} AI web development project for ${project.category || 'modern apps'}`} loading="lazy" decoding="async" className="project-card-image object-contain object-center w-full h-full" />
               : <div className="text-sm">Project Screenshot Placeholder</div>}
           </div>
         </div>

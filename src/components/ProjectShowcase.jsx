@@ -1,38 +1,92 @@
 import React from 'react'
-import ProjectCard from './ProjectCard'
-import { motion } from 'framer-motion'
+import { ArrowUpRight, Sparkles } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
-export default function ProjectShowcase({ featured, side = [] }){
+function slugify(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export default function ProjectShowcase({ featured, spotlight = [], onExploreServices }) {
+  if (!featured) return null
+
+  const caseStudySlug = slugify(featured.title)
+
   return (
-    <div className="relative w-full">
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="w-full max-w-6xl relative">
-          {/* left side cards */}
-          <div className="hidden lg:block">
-            <div className="absolute left-0 top-20 w-72 transform -rotate-3 opacity-60 blur-sm">
-              <ProjectCard project={side[0] || featured} className="scale-95" />
-            </div>
-            <div className="absolute left-24 bottom-8 w-80 transform rotate-2 opacity-50 blur-sm">
-              <ProjectCard project={side[1] || featured} className="scale-90" />
-            </div>
+    <section className="projects-showcase" aria-label="Featured project showcase">
+      <article className="projects-showcase-hero">
+        <div className="projects-showcase-media">
+          {featured.image ? (
+            <img
+              src={featured.image}
+              alt={`${featured.title} project preview`}
+              className="projects-showcase-image"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div className="projects-showcase-placeholder">Featured project preview</div>
+          )}
+        </div>
+
+        <div className="projects-showcase-content">
+          <p className="projects-showcase-kicker">
+            <Sparkles size={15} />
+            Featured Case Study
+          </p>
+          <h2 className="projects-showcase-title">{featured.title}</h2>
+          <p className="projects-showcase-description">{featured.description}</p>
+
+          <div className="projects-showcase-tags">
+            {(featured.tags || []).slice(0, 5).map((tag) => (
+              <span className="projects-showcase-tag" key={tag}>{tag}</span>
+            ))}
           </div>
 
-          {/* center featured */}
-          <div className="relative mx-auto w-full max-w-[520px]">
-            <ProjectCard project={featured} large />
-          </div>
-
-          {/* right side cards */}
-          <div className="hidden lg:block">
-            <div className="absolute right-24 bottom-8 w-80 transform -rotate-2 opacity-50 blur-sm">
-              <ProjectCard project={side[2] || featured} className="scale-90" />
-            </div>
-            <div className="absolute right-0 top-20 w-72 transform rotate-3 opacity-60 blur-sm">
-              <ProjectCard project={side[3] || featured} className="scale-95" />
-            </div>
+          <div className="projects-showcase-actions">
+            <Link to={`/projects/${caseStudySlug}`} className="projects-showcase-btn projects-showcase-btn-primary">
+              Read Case Study
+            </Link>
+            {featured.liveUrl ? (
+              <a
+                href={featured.liveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="projects-showcase-btn projects-showcase-btn-secondary"
+              >
+                Live Preview <ArrowUpRight size={16} />
+              </a>
+            ) : null}
+            <button type="button" className="projects-showcase-btn projects-showcase-btn-ghost" onClick={onExploreServices}>
+              Explore Services
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+      </article>
+
+      {spotlight.length > 0 ? (
+        <aside className="projects-showcase-rail" aria-label="Highlighted projects">
+          {spotlight.map((project) => (
+            <Link to={`/projects/${slugify(project.title)}`} key={project.id} className="projects-spotlight-card">
+              <div className="projects-spotlight-head">
+                <h3>{project.title}</h3>
+                <ArrowUpRight size={14} />
+              </div>
+              <p>{project.description}</p>
+              <div className="projects-spotlight-tags">
+                {(project.tags || []).slice(0, 3).map((tag) => (
+                  <span key={`${project.id}-${tag}`}>{tag}</span>
+                ))}
+              </div>
+            </Link>
+          ))}
+        </aside>
+      ) : null}
+    </section>
   )
 }

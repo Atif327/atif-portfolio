@@ -5,10 +5,20 @@ import ProjectShowcase from '../components/ProjectShowcase'
 import ProjectCard from '../components/ProjectCard'
 import Seo from '../components/Seo'
 import { usePortfolioData } from '../context/PortfolioDataContext'
+import './project.css'
 
 export default function Projects(){
   const navigate = useNavigate()
   const { sortedProjects } = usePortfolioData()
+
+  const normalizeCategory = (value) => {
+    if (Array.isArray(value)) return value.map((entry) => String(entry).trim()).filter(Boolean)
+    return String(value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  }
+
   const publicProjects = useMemo(() => {
     return sortedProjects
       .filter((project) => project.isActive)
@@ -21,26 +31,31 @@ export default function Projects(){
         liveUrl: project.liveUrl,
         description: project.shortDescription,
         tags: project.technologies,
+        categoryList: normalizeCategory(project.category),
       }))
   }, [sortedProjects])
 
-  const filters = ['All', 'Web Apps', 'Mobile Apps', 'AI Tools', 'Dashboards', 'APIs']
+  const filters = useMemo(() => {
+    const allCategories = publicProjects.flatMap((project) => project.categoryList)
+    const uniqueCategories = Array.from(new Set(allCategories))
+    return ['All', ...uniqueCategories]
+  }, [publicProjects])
 
   const [active, setActive] = useState('All')
+
   const filtered = useMemo(() => {
     if (active === 'All') return publicProjects
-    return publicProjects.filter((project) => {
-      const raw = project.category || ''
-      const list = Array.isArray(raw) ? raw : String(raw).split(',').map((s) => s.trim()).filter(Boolean)
-      return list.includes(active)
-    })
+    return publicProjects.filter((project) => project.categoryList.includes(active))
   }, [active, publicProjects])
+
   const featured = filtered[0] || publicProjects[0]
-  const side = filtered.filter((project) => project.id !== featured?.id).slice(0, 4)
+  const spotlight = filtered.filter((project) => project.id !== featured?.id).slice(0, 3)
+  const gridProjects = filtered.filter((project) => project.id !== featured?.id)
+
   const projectStats = [
-    { value: '15+', label: 'Projects Built' },
-    { value: '10+', label: 'Clients' },
-    { value: '3+', label: 'Core Technologies' },
+    { value: `${publicProjects.length}+`, label: 'Published Projects' },
+    { value: `${filters.length - 1}+`, label: 'Project Domains' },
+    { value: '100%', label: 'Mobile Responsive' },
   ]
 
   return (
@@ -58,10 +73,10 @@ export default function Projects(){
       <div className="projects-shell section-container">
         <header className="projects-header">
           <div className="projects-eyebrow">Case Studies</div>
-          <h1 className="projects-title">Web, AI &amp; Software Projects</h1>
+          <h1 className="projects-title">Professional Project Portfolio</h1>
           <p className="projects-subtitle">
-            Selected products and case studies across AI tools, web applications, dashboards, and API-driven systems.
-            Built with a focus on usability, performance, and business outcomes.
+            End-to-end product builds across AI tooling, web apps, dashboards, and API platforms.
+            Each project is structured with clear outcomes, technical depth, and production-ready UX.
           </p>
           <div className="projects-filters" role="tablist" aria-label="Project categories">
             {filters.map(f => (
@@ -80,30 +95,29 @@ export default function Projects(){
         </header>
 
         <main className="projects-main">
-          <div className="projects-showcase-wrap">
-            <div className="projects-showcase-layer" aria-hidden="true">
-              <div className="projects-showcase-inner">
-                {featured ? <ProjectShowcase featured={featured} side={side} /> : null}
-              </div>
+          <ProjectShowcase
+            featured={featured}
+            spotlight={spotlight}
+            onExploreServices={() => navigate('/services')}
+          />
+
+          <section className="projects-grid-wrap" aria-label="All projects">
+            <div className="projects-cards-grid">
+              {gridProjects.length === 0 ? <p className="projects-empty">No additional projects available for this category yet.</p> : null}
+              {gridProjects.map((project, index) => (
+                <motion.div
+                  key={project.id}
+                  className="project-card-motion"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{ duration: 0.45, delay: Math.min(index * 0.08, 0.3) }}
+                >
+                  <ProjectCard project={project} />
+                </motion.div>
+              ))}
             </div>
-            <div className="projects-grid-wrap">
-              <div className="projects-cards-grid">
-                {filtered.length === 0 ? <p className="text-slate-400">No projects available right now.</p> : null}
-                {filtered.map((project, index) => (
-                  <motion.div
-                    key={project.id}
-                    className="project-card-motion"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.15 }}
-                    transition={{ duration: 0.45, delay: Math.min(index * 0.08, 0.3) }}
-                  >
-                    <ProjectCard project={project} />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
+          </section>
 
           <div className="project-stats-grid">
             {projectStats.map((item, index) => (
@@ -127,7 +141,7 @@ export default function Projects(){
               className="projects-cta-btn"
               onClick={() => navigate('/services')}
             >
-              Explore Services
+              Need a Similar Product? Let&apos;s Build It
             </button>
           </div>
         </main>
