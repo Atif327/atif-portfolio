@@ -7,6 +7,8 @@ import './assistant.css'
 
 const STORAGE_KEY = 'portfolio-assistant-chat-v1'
 const ASSISTANT_API_URL = import.meta.env.VITE_ASSISTANT_API_URL || 'http://localhost:5000/api/assistant/chat'
+const REVIEW_KEY = 'atif_review_submitted'
+const REVIEW_ASKED_KEY = 'atif_assistant_review_asked'
 
 const starterPrompts = [
   'Who is Atif Ayyoub?',
@@ -23,6 +25,21 @@ function normalize(value) {
 
 function uniqueValues(values) {
   return [...new Set(values.filter(Boolean))]
+}
+
+function shouldInviteForReview(userMessage) {
+  const text = normalize(userMessage)
+  const positiveSignals = [
+    'this is amazing',
+    'great work',
+    'nice work',
+    'impressive',
+    'i like your portfolio',
+    'your projects are good',
+    'looks great',
+    'excellent',
+  ]
+  return positiveSignals.some((signal) => text.includes(signal))
 }
 
 function buildKnowledgeSnapshot({ settings, services, projects, blogs }) {
@@ -157,7 +174,20 @@ export default function Assistant() {
         throw new Error(data?.error || 'Gemini response unavailable')
       }
 
-      setMessages((prev) => [...prev, { role: 'assistant', text: data.reply }])
+      const shouldAskReview = (() => {
+        const alreadyReviewed = window.localStorage.getItem(REVIEW_KEY) === 'true'
+        const alreadyAsked = window.localStorage.getItem(REVIEW_ASKED_KEY) === 'true'
+        return !alreadyReviewed && !alreadyAsked && shouldInviteForReview(text)
+      })()
+
+      const reviewInvite = "I'm really glad you liked it. If you'd like, you can leave a short review - it helps build trust and supports the growth of the portfolio."
+      const finalReply = shouldAskReview ? `${data.reply}\n\n${reviewInvite}` : data.reply
+
+      if (shouldAskReview) {
+        window.localStorage.setItem(REVIEW_ASKED_KEY, 'true')
+      }
+
+      setMessages((prev) => [...prev, { role: 'assistant', text: finalReply }])
       setStatus('Ready')
     } catch (error) {
       console.error('Gemini chat error:', error)

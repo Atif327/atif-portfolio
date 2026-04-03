@@ -1,16 +1,20 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import TechStack from '../components/TechStack'
 import ThemeSwitcher from '../components/ThemeSwitcher'
 import Seo from '../components/Seo'
+import ReviewsSection, { toReviewSchema } from '../components/ReviewsSection'
 import { usePortfolioData } from '../context/PortfolioDataContext'
+import { fetchReviews } from '../services/reviewService'
 import { getSocialIcon } from '../admin/iconMaps'
 import './home.css'
 
 export default function Home() {
   const navigate = useNavigate()
   const { settings, sortedSocialLinks } = usePortfolioData()
+  const [approvedReviews, setApprovedReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(true)
 
   const resumeUrl = settings.resumeLink?.trim() || '/Atif CV.pdf'
   const isLocalResume = resumeUrl.startsWith('/')
@@ -85,6 +89,49 @@ export default function Home() {
       return getSocialPriority(a.platform) - getSocialPriority(b.platform)
     })
 
+  const openReviewPopup = () => {
+    const reviewsSection = document.getElementById('home-reviews-section')
+    if (reviewsSection) {
+      reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.setTimeout(() => {
+        window.dispatchEvent(new Event('portfolio-open-review-popup'))
+      }, 900)
+      return
+    }
+
+    window.dispatchEvent(new Event('portfolio-open-review-popup'))
+  }
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadReviews() {
+      try {
+        const result = await fetchReviews()
+        if (mounted) {
+          setApprovedReviews(Array.isArray(result) ? result : [])
+        }
+      } catch (error) {
+        console.error('Failed to load approved reviews:', error)
+      } finally {
+        if (mounted) {
+          setReviewsLoading(false)
+        }
+      }
+    }
+
+    loadReviews()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const reviewSchema = useMemo(() => {
+    if (approvedReviews.length === 0) return null
+    return toReviewSchema(approvedReviews)
+  }, [approvedReviews])
+
   return (
     <motion.section
       className="home-v2"
@@ -96,6 +143,7 @@ export default function Home() {
         title="Atif Ayyoub | AI Web & Custom Software Developer"
         description="Portfolio of Atif Ayyoub, an AI Web & Custom Software Developer building scalable web apps, dashboards, APIs, and custom software solutions."
         pathname="/"
+        schema={reviewSchema}
       />
       <div className="home-v2__container">
         <ThemeSwitcher />
@@ -125,6 +173,9 @@ export default function Home() {
               </button>
               <button className="home-v2__btn home-v2__btn--ghost" onClick={() => navigate('/projects')}>
                 View My Projects
+              </button>
+              <button className="home-v2__btn home-v2__btn--ghost" onClick={openReviewPopup}>
+                Leave a Review
               </button>
             </div>
           </div>
@@ -177,6 +228,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <ReviewsSection reviews={approvedReviews} loading={reviewsLoading} />
 
         <section className="home-v2__section">
           <h2 className="home-v2__section-title">Technologies I Work With</h2>

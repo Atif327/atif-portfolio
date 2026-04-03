@@ -101,6 +101,7 @@ export default function AdminDashboardPage() {
         <Link className="dashboard-quick-action-link" to="/admin/projects">Add Project</Link>
         <Link className="dashboard-quick-action-link" to="/admin/blog">Manage Blog</Link>
         <Link className="dashboard-quick-action-link" to="/admin/messages">View Messages</Link>
+        <Link className="dashboard-quick-action-link" to="/admin/reviews">Moderate Reviews</Link>
         <Link className="dashboard-quick-action-link" to="/admin/settings">Update Portfolio</Link>
       </div>
     </AdminLayout>

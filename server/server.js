@@ -5,6 +5,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const assistantChatRoute = require('./assistant-chat');
+const reviewRoute = require('./reviews');
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ if (hasSupabaseUpload) {
   console.warn('Upload-image route disabled: SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set.');
 }
 app.use('/api/assistant', assistantChatRoute);
+app.use('/api/reviews', reviewRoute);
 
 // Start server
 const PORT = process.env.PORT || 5000;

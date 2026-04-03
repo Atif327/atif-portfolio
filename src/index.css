@@ -2384,6 +2384,20 @@ html { scroll-behavior: smooth }
   margin-bottom:20px;
 }
 
+.admin-reviews-toolbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 190px;
+  gap:16px;
+  margin-bottom:16px;
+}
+
+.admin-review-stars{
+  color:#FACC15;
+  letter-spacing:0.08em;
+  margin-top:6px;
+  font-size:14px;
+}
+
 .admin-messages-grid{
   display:grid;
   grid-template-columns:360px minmax(0,1fr);
@@ -2539,6 +2553,10 @@ html { scroll-behavior: smooth }
 }
 
 @media (max-width: 991px){
+  .admin-reviews-toolbar{
+    grid-template-columns:1fr;
+  }
+
   .admin-messages-grid{
     grid-template-columns:1fr;
   }

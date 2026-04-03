@@ -1,12 +1,14 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Cursor from './components/Cursor'
 import DeferredAnimatedBg from './components/DeferredAnimatedBg'
 import Footer from './components/Footer'
 import Loader from './components/Loader'
+import ReviewPopup from './components/ReviewPopup'
 import ScrollEnhancements from './components/ScrollEnhancements'
 import { Navigate, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import ProtectedRoute from './admin/ProtectedRoute'
+import useReviewPrompt from './hooks/useReviewPrompt'
 
 const Home = React.lazy(() => import('./pages/Home'))
 const About = React.lazy(() => import('./pages/About'))
@@ -29,6 +31,7 @@ const AdminProjectsPage = React.lazy(() => import('./pages/admin/AdminProjectsPa
 const AdminEducationPage = React.lazy(() => import('./pages/admin/AdminEducationPage'))
 const AdminBlogPage = React.lazy(() => import('./pages/admin/AdminBlogPage'))
 const AdminMessagesPage = React.lazy(() => import('./pages/admin/AdminMessagesPage'))
+const AdminReviewsPage = React.lazy(() => import('./pages/admin/AdminReviewsPage'))
 const AdminSettingsPage = React.lazy(() => import('./pages/admin/AdminSettingsPage'))
 const AdminSocialLinksPage = React.lazy(() => import('./pages/admin/AdminSocialLinksPage'))
 
@@ -36,6 +39,11 @@ export default function App(){
   const navigate = useNavigate()
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
+  const { isOpen: showReviewPrompt, markReviewed, dismissPrompt } = useReviewPrompt({
+    delayRangeMs: [30000, 60000],
+    enableDismissMemory: true,
+  })
+  const [manualReviewOpen, setManualReviewOpen] = useState(false)
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('portfolio_theme_v1')
@@ -45,6 +53,30 @@ export default function App(){
       delete document.documentElement.dataset.theme
     }
   }, [])
+
+  useEffect(() => {
+    const onOpenReviewPopup = () => {
+      setManualReviewOpen(true)
+    }
+
+    window.addEventListener('portfolio-open-review-popup', onOpenReviewPopup)
+    return () => {
+      window.removeEventListener('portfolio-open-review-popup', onOpenReviewPopup)
+    }
+  }, [])
+
+  const handleReviewClose = () => {
+    if (manualReviewOpen) {
+      setManualReviewOpen(false)
+      return
+    }
+    dismissPrompt()
+  }
+
+  const handleReviewed = () => {
+    setManualReviewOpen(false)
+    markReviewed()
+  }
 
   const activePublicNav = (() => {
     if (location.pathname === '/') return 'home'
@@ -133,6 +165,14 @@ export default function App(){
               }
             />
             <Route
+              path="/admin/reviews"
+              element={
+                <ProtectedRoute>
+                  <AdminReviewsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/settings"
               element={
                 <ProtectedRoute>
@@ -184,6 +224,11 @@ export default function App(){
             <Footer />
           </div>
           <Cursor />
+          <ReviewPopup
+            open={showReviewPrompt || manualReviewOpen}
+            onReviewed={handleReviewed}
+            onClose={handleReviewClose}
+          />
         </div>
       )}
     </>

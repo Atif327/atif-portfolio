@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import App from './App'
 import ScrollToTop from './components/ScrollToTop'
 import './index.css'
+import './styles/reviews.css'
 import { AdminAuthProvider } from './context/AdminAuthContext'
 import { PortfolioDataProvider } from './context/PortfolioDataContext'
 
