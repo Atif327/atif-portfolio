@@ -15,6 +15,7 @@ export default function Home() {
   const { settings, sortedSocialLinks } = usePortfolioData()
   const [approvedReviews, setApprovedReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(true)
+  const [reviewsError, setReviewsError] = useState('')
 
   const resumeUrl = settings.resumeLink?.trim() || '/Atif CV.pdf'
   const isLocalResume = resumeUrl.startsWith('/')
@@ -107,12 +108,16 @@ export default function Home() {
 
     async function loadReviews() {
       try {
+        setReviewsError('')
         const result = await fetchReviews()
         if (mounted) {
           setApprovedReviews(Array.isArray(result) ? result : [])
         }
       } catch (error) {
         console.error('Failed to load approved reviews:', error)
+        if (mounted) {
+          setReviewsError(error?.message || 'Reviews are unavailable right now. Please try again shortly.')
+        }
       } finally {
         if (mounted) {
           setReviewsLoading(false)
@@ -214,22 +219,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="home-v2__section">
-          <h2 className="home-v2__section-title">What Clients Say</h2>
-          <div className="home-v2__testimonials-marquee">
-            <div className="home-v2__testimonials-track">
-              {marqueeTestimonials.map((item, index) => (
-              <article key={`${item.id}-${index}`} className="card-shell home-v2__testimonial-card">
-                <p className="home-v2__quote">“{item.text}”</p>
-                <p className="home-v2__quote-name">{item.name}</p>
-                <p className="home-v2__quote-role">{item.role}</p>
-              </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Removed: What Clients Say section (testimonials marquee) */}
 
-        <ReviewsSection reviews={approvedReviews} loading={reviewsLoading} />
+        <ReviewsSection reviews={approvedReviews} loading={reviewsLoading} error={reviewsError} />
 
         <section className="home-v2__section">
           <h2 className="home-v2__section-title">Technologies I Work With</h2>

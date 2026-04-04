@@ -6,12 +6,15 @@ const WINDOW_MS = 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 8
 const rateLimitStore = new Map()
 
-function getSupabaseClient() {
+function getSupabaseClient(options = {}) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  const requireServiceRole = options.requireServiceRole === true
+  const key = requireServiceRole ? serviceRoleKey : serviceRoleKey || anonKey
 
-  if (!supabaseUrl || !serviceRoleKey) return null
-  return createClient(supabaseUrl, serviceRoleKey)
+  if (!supabaseUrl || !key) return null
+  return createClient(supabaseUrl, key)
 }
 
 function getClientIp(req) {
@@ -117,10 +120,13 @@ router.get('/', async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized admin request.' })
     }
 
-    const supabase = getSupabaseClient()
+    const supabase = getSupabaseClient({ requireServiceRole: isAdminScope })
 
     if (!supabase) {
-      return res.status(500).json({ message: 'Server is missing Supabase credentials.' })
+      const message = isAdminScope
+        ? 'Server is missing Supabase service-role credentials for admin review actions.'
+        : 'Server is missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY).'
+      return res.status(500).json({ message })
     }
 
     const query = isAdminScope
@@ -161,7 +167,7 @@ router.post('/', async (req, res) => {
 
     const supabase = getSupabaseClient()
     if (!supabase) {
-      return res.status(500).json({ message: 'Server is missing Supabase credentials.' })
+      return res.status(500).json({ message: 'Server is missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY).' })
     }
 
     const validation = validatePayload(req.body)
@@ -202,9 +208,9 @@ router.patch('/', async (req, res) => {
     return res.status(401).json({ message: 'Unauthorized admin request.' })
   }
 
-  const supabase = getSupabaseClient()
+  const supabase = getSupabaseClient({ requireServiceRole: true })
   if (!supabase) {
-    return res.status(500).json({ message: 'Server is missing Supabase credentials.' })
+    return res.status(500).json({ message: 'Server is missing Supabase service-role credentials for admin review actions.' })
   }
 
   const reviewId = sanitizeText(req.body?.id)
@@ -235,9 +241,9 @@ router.delete('/', async (req, res) => {
     return res.status(401).json({ message: 'Unauthorized admin request.' })
   }
 
-  const supabase = getSupabaseClient()
+  const supabase = getSupabaseClient({ requireServiceRole: true })
   if (!supabase) {
-    return res.status(500).json({ message: 'Server is missing Supabase credentials.' })
+    return res.status(500).json({ message: 'Server is missing Supabase service-role credentials for admin review actions.' })
   }
 
   const reviewId = sanitizeText(req.query?.id || req.body?.id)

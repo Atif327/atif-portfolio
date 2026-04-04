@@ -7,9 +7,16 @@ const rateLimitStore = new Map()
 function getServerSupabase() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  return { supabaseUrl, serviceRoleKey, anonKey }
+}
 
-  if (!supabaseUrl || !serviceRoleKey) return null
-  return createClient(supabaseUrl, serviceRoleKey)
+function createServerSupabase({ requireServiceRole = false } = {}) {
+  const { supabaseUrl, serviceRoleKey, anonKey } = getServerSupabase()
+  const key = requireServiceRole ? serviceRoleKey : serviceRoleKey || anonKey
+
+  if (!supabaseUrl || !key) return null
+  return createClient(supabaseUrl, key)
 }
 
 function getClientIp(req) {
@@ -235,12 +242,16 @@ async function handleAdminDelete(req, res, supabase) {
 
 export default async function handler(req, res) {
   try {
-    const supabase = getServerSupabase()
     const scope = sanitizeText(req.query?.scope).toLowerCase()
     const isAdminScope = scope === 'admin'
+    const requiresServiceRole = isAdminScope || req.method === 'PATCH' || req.method === 'DELETE'
+    const supabase = createServerSupabase({ requireServiceRole: requiresServiceRole })
 
     if (!supabase) {
-      return res.status(500).json({ message: 'Server is missing Supabase credentials.' })
+      const message = requiresServiceRole
+        ? 'Server is missing Supabase service-role credentials for admin review actions.'
+        : 'Server is missing Supabase credentials. Set SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY).'
+      return res.status(500).json({ message })
     }
 
     if (isAdminScope || req.method === 'PATCH' || req.method === 'DELETE') {

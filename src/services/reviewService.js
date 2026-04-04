@@ -40,7 +40,11 @@ export async function fetchReviews() {
   const result = await parseResponseSafe(response)
 
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to load reviews.')
+    const normalizedMessage = String(result.message || '').replace(/<[^>]*>/g, '').trim()
+    if (/missing supabase/i.test(normalizedMessage)) {
+      throw new Error('Reviews are temporarily unavailable while server credentials are being configured.')
+    }
+    throw new Error(normalizedMessage || 'Failed to load reviews.')
   }
 
   return Array.isArray(result.reviews) ? result.reviews : []
