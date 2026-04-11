@@ -11,26 +11,28 @@
   gap:34px;
 }
 
-.home-v2__theme-card{
+.home-v2__hero{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:24px;
+  align-items:center;
   position:relative;
   overflow:hidden;
+  /* Theme-aware background: uses current theme variables */
   background:
-    radial-gradient(780px 140px at -4% 0%, color-mix(in srgb, var(--accent-primary) 24%, transparent), transparent 56%),
-    radial-gradient(780px 140px at 102% 0%, color-mix(in srgb, var(--accent-secondary) 20%, transparent), transparent 58%),
-    linear-gradient(145deg, color-mix(in srgb, var(--card-bg) 86%, #ffffff 14%), color-mix(in srgb, var(--bg-secondary) 78%, transparent));
-  border:1px solid color-mix(in srgb, #ffffff 10%, var(--border-color));
-  box-shadow:0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+    radial-gradient(560px 260px at -12% -18%, color-mix(in srgb, var(--accent-secondary) 22%, transparent), transparent 62%),
+    radial-gradient(520px 240px at 116% -10%, color-mix(in srgb, var(--accent-primary) 18%, transparent), transparent 60%),
+    linear-gradient(138deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border:1px solid color-mix(in srgb, var(--border-color) 20%, transparent);
+  box-shadow:0 20px 60px color-mix(in srgb, rgba(2,6,23,0.6) 100%, transparent 0%), inset 0 1px 0 color-mix(in srgb, rgba(255,255,255,0.08) 100%, transparent 0%);
 }
 
-/* Ensure theme card/panel can shrink on small screens */
-.home-v2__theme-card,
-.home-v2__theme-body{
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-  overflow-x:hidden;
+.home-v2__hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(118deg, color-mix(in srgb, #ffffff 6%, transparent), transparent 40%);
 }
 
 .home-v2__theme-card::before{
@@ -272,28 +274,62 @@
   padding:20px;
 }
 
+/* Ensure hero uses its own theme-aware background even when card-shell is present */
+.home-v2__hero.card-shell{
+  background:
+    radial-gradient(560px 260px at -12% -18%, color-mix(in srgb, var(--accent-secondary) 22%, transparent), transparent 62%),
+    radial-gradient(520px 240px at 116% -10%, color-mix(in srgb, var(--accent-primary) 18%, transparent), transparent 60%),
+    linear-gradient(138deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border:1px solid color-mix(in srgb, var(--border-color) 20%, transparent);
+  box-shadow:0 20px 60px color-mix(in srgb, rgba(2,6,23,0.6) 100%, transparent 0%), inset 0 1px 0 color-mix(in srgb, rgba(255,255,255,0.08) 100%, transparent 0%);
+}
+
 .home-v2__hero{
   display:grid;
   grid-template-columns:1fr;
   gap:24px;
   align-items:center;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(560px 260px at -12% -18%, rgba(56, 189, 248, 0.2), transparent 62%),
+    radial-gradient(520px 240px at 116% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+    linear-gradient(138deg, #071028 0%, #0b1738 48%, #12214a 100%);
+  border:1px solid rgba(148, 163, 184, 0.2);
+  box-shadow:0 20px 60px rgba(2, 6, 23, 0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.home-v2__hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(118deg, rgba(255,255,255,0.08), transparent 40%);
 }
 
 .home-v2__hero-content{
+  position:relative;
+  z-index:1;
   text-align:left;
 }
 
 .home-v2__intro{
-  color:#CBD5F5;
-  font-size:15px;
+  color:#bfdbfe;
+  font-size:30px;
+  letter-spacing:0.02em;
+  font-weight: 700;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .home-v2__name{
   margin-top:8px;
-  color:#F8FAFC;
-  font-size:34px;
+  color:#f8fafc;
+  font-size:clamp(2.1rem, 4vw, 3.3rem);
   font-weight:800;
-  line-height:1.15;
+  line-height:1.05;
+  letter-spacing:-0.03em;
+  max-width:13ch;
+  text-wrap:balance;
 }
 
 .home-v2__role{
@@ -304,52 +340,122 @@
 }
 
 .home-v2__subtitle{
-  margin-top:12px;
-  color:#94A3B8;
-  line-height:1.7;
-  font-size:15px;
+  margin-top:16px;
+  color:#dbeafe;
+  line-height:1.8;
+  font-size:16px;
+  max-width:62ch;
+}
+
+.home-v2__trust{
+  margin-top:14px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:#c7d2fe;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.02em;
+  background:rgba(15, 23, 42, 0.42);
+  border:1px solid rgba(191, 219, 254, 0.22);
+  border-radius:999px;
+  padding:7px 12px;
+  backdrop-filter:blur(8px);
+}
+
+.home-v2__trust::before{
+  content:'';
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#22d3ee;
+  box-shadow:0 0 12px rgba(34, 211, 238, 0.95);
 }
 
 .home-v2__actions{
-  margin-top:20px;
+  margin-top:24px;
   display:flex;
   flex-wrap:wrap;
   gap:12px;
 }
 
 .home-v2__btn{
-  padding:12px 18px;
+  padding:13px 22px;
   border-radius:12px;
-  border:1px solid transparent;
+  border:1px solid rgba(191, 219, 254, 0.26);
   font-size:14px;
-  font-weight:600;
+  font-weight:700;
+  letter-spacing:0.01em;
   text-decoration:none;
   cursor:pointer;
+  transition:transform .24s ease, box-shadow .24s ease, background .24s ease, border-color .24s ease;
 }
 
 .home-v2__btn--primary{
-  background:linear-gradient(135deg, var(--primary), var(--secondary));
+  background:linear-gradient(135deg, #1d4ed8, #0ea5e9);
   color:#fff;
+  border-color:transparent;
+  box-shadow:0 12px 28px rgba(14, 165, 233, 0.36);
+}
+
+.home-v2__btn--primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 16px 36px rgba(14, 165, 233, 0.48);
 }
 
 .home-v2__btn--ghost{
-  background:transparent;
-  color:#CBD5F5;
-  border-color:rgba(255,255,255,0.2);
+  background:rgba(15, 23, 42, 0.35);
+  color:#dbeafe;
+  border-color:rgba(191, 219, 254, 0.35);
+  backdrop-filter:blur(8px);
+}
+
+.home-v2__btn--ghost:hover{
+  transform:translateY(-2px);
+  background:rgba(30, 41, 59, 0.64);
+  border-color:rgba(125, 211, 252, 0.6);
 }
 
 .home-v2__hero-image-wrap{
+  position:relative;
+  z-index:1;
   display:flex;
   justify-content:center;
+  align-items:center;
+}
+
+.home-v2__hero-image-shell{
+  position:absolute;
+  width:320px;
+  height:320px;
+  border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--accent-secondary) 24%, transparent) 0%, transparent 72%);
+  filter:blur(18px);
+  pointer-events:none;
+}
+
+.home-v2__hero-image-ring{
+  width:290px;
+  height:290px;
+  border-radius:50%;
+  padding:8px;
+  background:linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
+  box-shadow:0 24px 56px color-mix(in srgb, var(--bg-primary) 60%, transparent), 0 0 26px var(--glow-color);
+  transition:transform .35s ease, box-shadow .35s ease;
 }
 
 .home-v2__hero-image{
-  width:200px;
-  height:200px;
+  width:100%;
+  height:100%;
   border-radius:50%;
-  border:3px solid var(--primary);
+  border:2px solid color-mix(in srgb, var(--button-gradient-start) 42%, rgba(255,255,255,0.12));
   background:center/cover no-repeat;
-  box-shadow:0 0 30px rgba(79,70,229,0.4);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, rgba(255,255,255,0.2) 100%, transparent 0%), 0 14px 38px color-mix(in srgb, var(--bg-primary) 60%, transparent 0%);
+}
+
+.home-v2__hero-image-ring:hover{
+  transform:translateY(-6px) scale(1.01);
+  box-shadow:0 30px 62px color-mix(in srgb, var(--bg-primary) 68%, transparent), 0 0 34px var(--glow-color);
 }
 
 .home-v2__section{
@@ -498,15 +604,16 @@
 
   .home-v2__hero{
     grid-template-columns:1.25fr 0.75fr;
+    gap:44px;
   }
 
   .home-v2__name{
-    font-size:44px;
+    font-size:clamp(2.5rem, 4.2vw, 3.6rem);
   }
 
-  .home-v2__hero-image{
-    width:250px;
-    height:250px;
+  .home-v2__hero-image-ring{
+    width:320px;
+    height:320px;
   }
 
   .home-v2__info-grid{
@@ -521,6 +628,39 @@
 }
 
 @media (max-width: 767px){
+  .home-v2__hero{
+    gap:20px;
+  }
+
+  .home-v2__hero-content{
+    text-align:center;
+  }
+
+  .home-v2__name{
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .home-v2__subtitle{
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .home-v2__actions{
+    justify-content:center;
+  }
+
+  .home-v2__hero-image-shell{
+    width:250px;
+    height:250px;
+  }
+
+  .home-v2__hero-image-ring{
+    width:220px;
+    height:220px;
+    padding:6px;
+  }
+
   .home-v2__theme-btn{
     flex:1 1 calc(50% - 10px);
     min-width:150px;

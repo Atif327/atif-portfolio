@@ -17,8 +17,6 @@ export default function Home() {
   const [reviewsLoading, setReviewsLoading] = useState(true)
   const [reviewsError, setReviewsError] = useState('')
 
-  const resumeUrl = settings.resumeLink?.trim() || '/Atif CV.pdf'
-  const isLocalResume = resumeUrl.startsWith('/')
   const publicSocialLinks = sortedSocialLinks.filter((link) => link.isActive)
   const normalizePlatform = (value) => String(value || '').toLowerCase().replace(/\s+/g, '').trim()
   const getSocialPriority = (value) => {
@@ -90,19 +88,6 @@ export default function Home() {
       return getSocialPriority(a.platform) - getSocialPriority(b.platform)
     })
 
-  const openReviewPopup = () => {
-    const reviewsSection = document.getElementById('home-reviews-section')
-    if (reviewsSection) {
-      reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      window.setTimeout(() => {
-        window.dispatchEvent(new Event('portfolio-open-review-popup'))
-      }, 900)
-      return
-    }
-
-    window.dispatchEvent(new Event('portfolio-open-review-popup'))
-  }
-
   useEffect(() => {
     let mounted = true
 
@@ -155,43 +140,33 @@ export default function Home() {
 
         <section className="home-v2__hero card-shell">
           <div className="home-v2__hero-content">
-            <p className="home-v2__intro">{settings.introLine || "Hi, I'm"}</p>
+            <p className="home-v2__intro">Hi, I&apos;m {settings.fullName || 'Atif Ayyoub'}</p>
             <h1 className="home-v2__name">AI Web &amp; Custom Software Developer</h1>
-            <p className="home-v2__intro">{settings.fullName || 'Atif Ayyoub'}</p>
-            <p className="home-v2__role">{settings.heroTitle}</p>
             <p className="home-v2__subtitle">
-              {settings.heroSubtitle || 'AI Web Developer, Full Stack Developer, and React Developer building elegant products with modern design and performance-first delivery.'}
+              I build AI-powered web apps that automate workflows, reduce friction, and drive business growth.
             </p>
+            <p className="home-v2__trust">Trusted by startups &amp; businesses worldwide</p>
 
             <div className="home-v2__actions">
-              <a
-                className="home-v2__btn home-v2__btn--primary"
-                href={resumeUrl}
-                target={isLocalResume ? undefined : '_blank'}
-                rel={isLocalResume ? undefined : 'noreferrer'}
-                download={isLocalResume ? 'Atif CV.pdf' : undefined}
-              >
-                Download Resume
-              </a>
+              <button className="home-v2__btn home-v2__btn--primary" onClick={() => navigate('/projects')}>
+                View My Work
+              </button>
               <button className="home-v2__btn home-v2__btn--ghost" onClick={() => navigate('/contact')}>
-                Contact Atif Ayyoub
-              </button>
-              <button className="home-v2__btn home-v2__btn--ghost" onClick={() => navigate('/projects')}>
-                View My Projects
-              </button>
-              <button className="home-v2__btn home-v2__btn--ghost" onClick={openReviewPopup}>
-                Leave a Review
+                Contact Me
               </button>
             </div>
           </div>
 
           <div className="home-v2__hero-image-wrap">
-            <div
-              className="home-v2__hero-image"
-              style={{ backgroundImage: `url(${settings.heroImage || '/atif-ayyoub-ai-developer.png'})` }}
-              role="img"
-              aria-label="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer"
-            />
+            <div className="home-v2__hero-image-shell" aria-hidden="true" />
+            <div className="home-v2__hero-image-ring">
+              <div
+                className="home-v2__hero-image"
+                style={{ backgroundImage: `url(${settings.heroImage || '/atif-ayyoub-ai-developer.png'})` }}
+                role="img"
+                aria-label="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer"
+              />
+            </div>
           </div>
         </section>
 
