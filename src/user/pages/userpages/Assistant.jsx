@@ -6,7 +6,7 @@ import { usePortfolioData } from '../../../context/PortfolioDataContext'
 import './assistant.css'
 
 const STORAGE_KEY = 'portfolio-assistant-chat-v1'
-const ASSISTANT_API_URL = import.meta.env.VITE_ASSISTANT_API_URL || 'http://localhost:5000/api/assistant/chat'
+const ASSISTANT_API_URL = import.meta.env.VITE_ASSISTANT_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api/assistant/chat' : '/api/assistant/chat')
 const REVIEW_KEY = 'atif_review_submitted'
 const REVIEW_ASKED_KEY = 'atif_assistant_review_asked'
 
