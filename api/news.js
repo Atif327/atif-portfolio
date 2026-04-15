@@ -151,10 +151,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const devUrl = 'https://dev.to/api/articles?per_page=10&tag=technology'
+    const NEWS_TARGET_COUNT = 30
+    const devUrl = `https://dev.to/api/articles?per_page=${NEWS_TARGET_COUNT}&tag=technology`
     const newsApiKey = process.env.NEWS_API_KEY || process.env.VITE_NEWS_API_KEY
     const newsApiUrl = newsApiKey
-      ? `https://newsapi.org/v2/top-headlines?category=technology&pageSize=10&apiKey=${newsApiKey}`
+      ? `https://newsapi.org/v2/top-headlines?category=technology&pageSize=${NEWS_TARGET_COUNT}&apiKey=${newsApiKey}`
       : null
 
     const requests = [
@@ -191,7 +192,10 @@ export default async function handler(req, res) {
       }
     }
 
-    const persistedItems = await persistToSupabase(merged)
+    // Only keep items that have a non-empty image thumbnail, then cap to target
+    const filteredMerged = merged.filter((it) => it && it.image && String(it.image).trim()).slice(0, NEWS_TARGET_COUNT)
+
+    const persistedItems = await persistToSupabase(filteredMerged)
     res.status(200).json({
       items: persistedItems,
       meta: {

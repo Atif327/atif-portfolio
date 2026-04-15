@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../../../user/components/Seo'
 import { BLOG_CATEGORY_OPTIONS } from '../../../admin/seedData'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
 import './blog.css'
+import Pagination from '../../../user/components/Pagination'
 
 function splitCategories(value) {
   return String(value || '')
@@ -26,6 +27,16 @@ export default function Blog() {
     if (activeCategory === 'All') return publishedBlogs
     return publishedBlogs.filter((post) => splitCategories(post.category).includes(activeCategory))
   }, [activeCategory, publishedBlogs])
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeCategory, publishedBlogs])
+
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE))
+  const paginatedPosts = filteredPosts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   return (
     <section className="blog-page">
@@ -66,7 +77,7 @@ export default function Blog() {
             </article>
           ) : null}
 
-          {filteredPosts.map((post) => (
+          {paginatedPosts.map((post) => (
             <article key={post.id} className="blog-card card-shell">
               <div className="blog-card__image-wrap">
                 <img
@@ -97,6 +108,10 @@ export default function Blog() {
             </article>
           ))}
         </section>
+
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onChange={(p) => setCurrentPage(p)} />
+        </div>
 
         <section className="blog-cta card-shell">
           <h2>Need help implementing this for your product?</h2>

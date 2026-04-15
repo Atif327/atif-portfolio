@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import ProjectCard from '../../../user/components/ProjectCard'
 import Seo from '../../../user/components/Seo'
+import Pagination from '../../../user/components/Pagination'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
 import './project.css'
 
@@ -93,6 +94,16 @@ export default function Projects() {
     return projects.filter((project) => project.filterGroup === activeFilter)
   }, [activeFilter, projects])
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeFilter, projects])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE))
+  const paginatedProjects = filteredProjects.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   const stats = useMemo(() => {
     const totalProjects = projects.length
     const webApps = projects.filter((project) => project.filterGroup === 'Web Apps').length
@@ -144,7 +155,7 @@ export default function Projects() {
           <div className="ppage__grid">
             {filteredProjects.length === 0 ? <p className="ppage__empty">No projects found for this filter.</p> : null}
 
-            {filteredProjects.map((project, index) => (
+            {paginatedProjects.map((project, index) => (
               <motion.div
                 key={project.id}
                 initial={{ opacity: 0, y: 24 }}
@@ -158,6 +169,10 @@ export default function Projects() {
             ))}
           </div>
         </section>
+
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onChange={(p) => setCurrentPage(p)} />
+        </div>
 
         <section className="ppage__stats" aria-label="Project statistics">
           {stats.map((item) => (

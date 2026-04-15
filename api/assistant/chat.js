@@ -21,6 +21,7 @@ const portfolioFacts = {
     nationality: 'Pakistan',
     education: 'Bachelor of Science in Software Engineering at Comsats University Islamabad, Vehari Campus',
   },
+  
   services: [
     {
       title: 'UI/UX Design',

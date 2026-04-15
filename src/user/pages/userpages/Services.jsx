@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import ServiceCard from '../../../user/components/ServiceCard'
 import Seo from '../../../user/components/Seo'
+import Pagination from '../../../user/components/Pagination'
 import { getServiceIcon } from '../../../admin/iconMaps'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
 import './services.css'
@@ -20,6 +21,16 @@ export default function Services(){
     'API Development': ['REST', 'Express', 'Postman'],
   }
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeServices.length])
+
+  const totalPages = Math.max(1, Math.ceil(activeServices.length / PAGE_SIZE))
+  const paginatedServices = activeServices.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   return (
     <motion.div initial={{opacity:0,y:40}} animate={{opacity:1,y:0}} transition={{duration:0.6}} className="p-12 services-page">
       <Seo
@@ -32,7 +43,7 @@ export default function Services(){
       <p className="services-subtitle">Clean code, fast delivery, and modern digital experiences for startups, businesses, and SaaS products.</p>
 
       <div className="mt-8 grid services-grid">
-        {activeServices.map((service, index) => (
+        {paginatedServices.map((service, index) => (
           <motion.div
             key={service.id}
             className="service-card-wrap"
@@ -52,6 +63,10 @@ export default function Services(){
             </ServiceCard>
           </motion.div>
         ))}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onChange={(p) => setCurrentPage(p)} />
       </div>
 
       <motion.div

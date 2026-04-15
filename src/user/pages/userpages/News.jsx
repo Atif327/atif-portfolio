@@ -4,6 +4,7 @@ import { FaCalendarAlt, FaClock, FaGlobe } from 'react-icons/fa'
 import { supabase } from '../../../lib/supabaseClient'
 import Seo from '../../../user/components/Seo'
 import './news.css'
+import Pagination from '../../../user/components/Pagination'
 
 function pick(item, ...keys){
   for(const k of keys) if(item && item[k] !== undefined) return item[k]
@@ -11,6 +12,7 @@ function pick(item, ...keys){
 }
 
 export default function News(){
+  const NEWS_TARGET_COUNT = 30
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedArticle, setSelectedArticle] = useState(null)
@@ -56,7 +58,7 @@ export default function News(){
 
   useEffect(() => {
     let mounted = true
-    const devUrl = 'https://dev.to/api/articles?per_page=10&tag=technology'
+    const devUrl = `https://dev.to/api/articles?per_page=${NEWS_TARGET_COUNT}&tag=technology`
     const serverNewsUrl = '/api/news'
 
     const mapDev = (list) => {
@@ -75,7 +77,9 @@ export default function News(){
 
     // Try DEV.to and NewsAPI (if key provided), combine results, fall back to mock JSON if both fail
     const newsKey = import.meta.env.VITE_NEWS_API_KEY
-    const newsApiUrl = newsKey ? `https://newsapi.org/v2/top-headlines?category=technology&pageSize=10&apiKey=${newsKey}` : null
+    const newsApiUrl = newsKey
+      ? `https://newsapi.org/v2/top-headlines?category=technology&pageSize=${NEWS_TARGET_COUNT}&apiKey=${newsKey}`
+      : null
 
     const mapNewsApi = (articles) => {
       if(!Array.isArray(articles)) articles = []
@@ -153,10 +157,9 @@ export default function News(){
         }
       }
 
-      // Only include articles that have an image/thumbnail URL
-      const finalList = withTopic(merged).filter((a) => a && a.image && String(a.image).trim())
+        const finalList = withTopic(merged).filter((a) => a && a.image && String(a.image).trim()).slice(0, NEWS_TARGET_COUNT)
       setItems(finalList)
-      if(shouldPersist) void persistItems(finalList)
+        if (shouldPersist) void persistItems(finalList)
     }
 
     fetch(serverNewsUrl)
@@ -207,7 +210,7 @@ export default function News(){
                 description: pick(it,'description') || '',
                 url: pick(it,'url','link','permalink') || '#'
               }))
-              setItems(withTopic(mapped))
+              setItems(withTopic(mapped).slice(0, NEWS_TARGET_COUNT))
             })
             .catch(e => { console.error('mock-news.json fetch also failed', e); setItems([]) })
         }
@@ -230,6 +233,16 @@ export default function News(){
     if (activeFilter === 'All') return items
     return items.filter((item) => item.topic === activeFilter)
   }, [activeFilter, items])
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeFilter, items])
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE))
+  const paginatedItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   return (
     <motion.section initial={{opacity:0,y:40}} animate={{opacity:1,y:0}} transition={{duration:0.6}} className="p-12">
@@ -272,7 +285,7 @@ export default function News(){
         ))}
         {!loading && filteredItems.length === 0 && <div className="text-[var(--text-secondary)]">No news available for this topic.</div>}
 
-        {filteredItems.map((it, idx) => (
+        {paginatedItems.map((it, idx) => (
           <article key={idx} className="news-card-item">
             <div className="news-card-top">
               <div className="news-type news-tag">{it.topic || 'Dev'}</div>
@@ -312,6 +325,9 @@ export default function News(){
             </div>
           </article>
         ))}
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onChange={(p) => setCurrentPage(p)} />
+        </div>
         {selectedArticle && (
           <div className="modal-overlay" onClick={() => setSelectedArticle(null)}>
             <div className="news-modal" onClick={(e)=>e.stopPropagation()}>
