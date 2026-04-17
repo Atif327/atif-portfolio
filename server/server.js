@@ -33,6 +33,7 @@ if (hasSupabaseUpload) {
   console.warn('Upload-image route disabled: SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not set.');
 }
 app.use('/api/assistant', assistantChatRoute);
+app.use('/api', assistantChatRoute);
 app.use('/api/reviews', reviewRoute);
 
 // Start server
