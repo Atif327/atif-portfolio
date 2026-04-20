@@ -9,12 +9,6 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-      },
-      // Proxy /news -> https://okhosty.xyz/Welcome/api for dev to avoid CORS
-      '/news': {
-        target: 'https://okhosty.xyz',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/news/, '/Welcome/api')
       }
     }
   },

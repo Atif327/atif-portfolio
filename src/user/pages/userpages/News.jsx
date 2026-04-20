@@ -95,6 +95,21 @@ export default function News(){
       }))
     }
 
+    const cleanupOldNews = async () => {
+      try {
+        if(supabase && typeof supabase.from === 'function') {
+          const cutoff = new Date()
+          cutoff.setDate(cutoff.getDate() - 7)
+          const { error } = await supabase.from('news').delete().lt('published_at', cutoff.toISOString()).select()
+          if(error) {
+            console.warn('Failed to cleanup old news:', error.message)
+          }
+        }
+      } catch(err) {
+        console.warn('News cleanup failed', err)
+      }
+    }
+
     const persistItems = async (finalList) => {
       try{
         if(supabase && typeof supabase.from === 'function' && finalList.length){
@@ -134,10 +149,7 @@ export default function News(){
           }
 
           await supabase.from('news').upsert(rows, { onConflict: 'url' })
-
-          const cutoff = new Date()
-          cutoff.setDate(cutoff.getDate() - 7)
-          await supabase.from('news').delete().lt('published_at', cutoff.toISOString())
+          await cleanupOldNews()
         }
       }catch(err){
         console.warn('Supabase persistence failed', err)
@@ -217,7 +229,12 @@ export default function News(){
 
         applyResults(successLists)
       })
-      .finally(()=>{ if(mounted) setLoading(false) })
+      .finally(()=>{ 
+        if(mounted) {
+          setLoading(false)
+          void cleanupOldNews()
+        }
+      })
 
     return ()=>{ mounted = false }
   }, [])
