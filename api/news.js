@@ -7,6 +7,7 @@ let cachedNewsAt = 0
 const CACHE_TTL_MS = 10 * 60 * 1000
 const NEWS_TARGET_COUNT = 30
 const NEWS_FETCH_TIMEOUT_MS = 2500
+const NEWS_STALE_AFTER_MS = 24 * 60 * 60 * 1000
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -91,7 +92,27 @@ function mapDbNewsRow(row) {
   }
 }
 
-async function fetchNewsFromSupabase() {
+function getMostRecentPublishedAt(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return null
+
+  let latest = 0
+  for (const row of rows) {
+    const candidate = row?.published_at ? new Date(row.published_at).getTime() : NaN
+    if (!Number.isNaN(candidate) && candidate > latest) {
+      latest = candidate
+    }
+  }
+
+  return latest > 0 ? latest : null
+}
+
+function isSupabaseNewsStale(rows) {
+  const latestPublishedAt = getMostRecentPublishedAt(rows)
+  if (!latestPublishedAt) return true
+  return Date.now() - latestPublishedAt > NEWS_STALE_AFTER_MS
+}
+
+async function fetchNewsRowsFromSupabase() {
   const supabase = getSupabaseClient()
   if (!supabase) return []
 
@@ -108,7 +129,34 @@ async function fetchNewsFromSupabase() {
     return []
   }
 
-  return data.map(mapDbNewsRow).filter((item) => item.image && String(item.image).trim())
+  return data
+}
+
+async function upsertNewsToSupabase(items) {
+  const supabase = getSupabaseClient()
+  if (!supabase || !Array.isArray(items) || items.length === 0) return
+
+  const rows = items
+    .filter((item) => item?.url && item?.image)
+    .map((item) => {
+      const published = item.date ? new Date(item.date) : null
+      return {
+        title: item.title || 'Untitled',
+        description: item.description || '',
+        url: item.url,
+        image: item.image,
+        published_at: published && !Number.isNaN(published.getTime()) ? published.toISOString() : null,
+        source: item.source || 'News',
+        category: item.category || 'All',
+      }
+    })
+
+  if (rows.length === 0) return
+
+  const { error } = await supabase.from('news').upsert(rows, { onConflict: 'url' })
+  if (error) {
+    console.warn('Supabase news upsert failed:', error.message || error)
+  }
 }
 
 async function fetchNewsFromRemote() {
@@ -169,19 +217,34 @@ async function fetchNewsFromRemote() {
 }
 
 async function fetchNewsData() {
-  const cachedRows = await fetchNewsFromSupabase()
-  if (cachedRows.length > 0) {
-    return cachedRows
+  const supabaseRows = await fetchNewsRowsFromSupabase()
+  const mappedSupabaseRows = supabaseRows.map(mapDbNewsRow).filter((item) => item.image && String(item.image).trim())
+  const shouldRefreshFromRemote = mappedSupabaseRows.length === 0 || isSupabaseNewsStale(supabaseRows)
+
+  if (!shouldRefreshFromRemote && mappedSupabaseRows.length > 0) {
+    return mappedSupabaseRows
   }
 
   try {
-    return await Promise.race([
+    const remoteItems = await Promise.race([
       fetchNewsFromRemote(),
       new Promise((_, reject) => {
         setTimeout(() => reject(new Error('News fetch timeout')), NEWS_FETCH_TIMEOUT_MS)
       }),
     ])
+
+    if (Array.isArray(remoteItems) && remoteItems.length > 0) {
+      await upsertNewsToSupabase(remoteItems)
+      return remoteItems
+    }
+
+    return mappedSupabaseRows
   } catch (error) {
+    if (mappedSupabaseRows.length > 0) {
+      console.warn('News refresh failed, using Supabase rows:', error.message || error)
+      return mappedSupabaseRows
+    }
+
     console.warn('News fetch timed out or failed, using local fallback:', error.message || error)
     const fallbackPath = new URL('../public/mock-news.json', import.meta.url)
     const fallbackRaw = await readFile(fallbackPath, 'utf8')
