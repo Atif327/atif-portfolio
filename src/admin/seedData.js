@@ -11,8 +11,8 @@ export const DEFAULT_SETTINGS = {
   nationality: 'Pakistan',
   languages: 'English, Urdu, Punjabi',
   resumeLink: '',
-  profileImage: '/atif-ayyoub-profile.png',
-  heroImage: '/atif-ayyoub-ai-developer.png',
+  profileImage: '/atif-ayyoub-profile.webp',
+  heroImage: '/atif-ayyoub-ai-developer.webp',
   introLine: "Hi, I\'m Atif Ayyoub",
   professionalTagline: 'Consistency Makes a Man Perfect in Their Skill Set.',
   aboutContent:
@@ -126,7 +126,7 @@ export const DEFAULT_PROJECTS = [
     shortDescription: 'Laravel-powered web app for browsing, categorizing and downloading high-quality wallpapers.',
     fullDescription:
       'Built with Laravel and MySQL. Supports user uploads, fast search, categories, and optimized image delivery for responsive viewing and downloads.',
-    thumbnail: '/Wallpaper Hub.png',
+    thumbnail: '/wallpaper-hub.webp',
     galleryImages: [],
     technologies: ['Laravel', 'PHP', 'MySQL'],
     category: 'Web Apps',
@@ -152,7 +152,7 @@ export const DEFAULT_PROJECTS = [
     shortDescription: 'Flutter app for creating, organizing and tracking tasks and subtasks.',
     fullDescription:
       'Built with Dart and SQLite with reminders, priorities, and progress tracking for offline-first productivity.',
-    thumbnail: '/Task Manager.jpeg',
+    thumbnail: '/task-manager.webp',
     galleryImages: [],
     technologies: ['Flutter', 'Dart', 'SQLite'],
     category: 'Mobile Apps',
@@ -178,7 +178,7 @@ export const DEFAULT_PROJECTS = [
     shortDescription: 'React + Node.js platform for managing assessments and attendance.',
     fullDescription:
       'Uses SQLite storage and provides grade entry, analytics, and exportable summaries for instructors.',
-    thumbnail: '/Student Evalution System.png',
+    thumbnail: '/student-evaluation-system.webp',
     galleryImages: [],
     technologies: ['React', 'Node.js', 'SQLite'],
     category: 'Web Apps',
@@ -288,7 +288,7 @@ Useful for fast repository navigation and large refactors with contextual unders
 ## Conclusion
 
 Build an AI-assisted workflow around your existing stack, and measure results weekly.` ,
-    coverImage: '/preview.png',
+    coverImage: '/preview.webp',
     category: 'AI',
     targetKeyword: 'AI tools for developers',
     seoTitle: 'Best AI Tools for Developers in 2026 | Atif Ayyoub',
@@ -325,7 +325,7 @@ Ship in small increments, monitor regressions, and keep rollback paths simple.
 ## Conclusion
 
 Scalability is the result of repeated engineering discipline, not one-time optimization.` ,
-    coverImage: '/atif-ayyoub-ai-developer.png',
+    coverImage: '/atif-ayyoub-ai-developer.webp',
     category: 'Web Development',
     targetKeyword: 'scalable web apps',
     seoTitle: 'How to Build Scalable Web Apps | Atif Ayyoub',
@@ -358,7 +358,7 @@ Define milestone-based delivery, weekly reporting, and acceptance criteria for e
 ## Conclusion
 
 Hiring success comes from process clarity as much as technical talent.` ,
-    coverImage: '/atif-ayyoub-profile.png',
+    coverImage: '/atif-ayyoub-profile.webp',
     category: 'Business',
     targetKeyword: 'hire web developer Pakistan',
     seoTitle: 'Hire Web Developer in Pakistan (2026) | Atif Ayyoub',

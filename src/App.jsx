@@ -3,8 +3,6 @@ import Sidebar from './user/components/Sidebar'
 import Cursor from './user/components/Cursor'
 import DeferredAnimatedBg from './user/components/DeferredAnimatedBg'
 import Footer from './user/components/Footer'
-import Loader from './user/components/Loader'
-import ReviewPopup from './user/components/ReviewPopup'
 import ScrollEnhancements from './user/components/ScrollEnhancements'
 import { Navigate, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import ProtectedRoute from './admin/ProtectedRoute'
@@ -23,6 +21,7 @@ const BlogPost = React.lazy(() => import('./user/pages/userpages/BlogPost'))
 const News = React.lazy(() => import('./user/pages/userpages/News'))
 const Contact = React.lazy(() => import('./user/pages/userpages/Contact'))
 const NotFound = React.lazy(() => import('./user/pages/userpages/NotFound'))
+const ReviewPopup = React.lazy(() => import('./user/components/ReviewPopup'))
 
 const AdminLoginPage = React.lazy(() => import('./admin/pages/AdminLoginPage'))
 const AdminDashboardPage = React.lazy(() => import('./admin/pages/AdminDashboardPage'))
@@ -110,7 +109,6 @@ export default function App(){
 
   return (
     <>
-      <Loader />
       <ScrollEnhancements />
       {isAdminRoute ? (
         <Suspense fallback={<div className="p-8 text-[var(--text-secondary)]">Loading page...</div>}>
@@ -224,15 +222,17 @@ export default function App(){
             <Footer />
           </div>
           <Cursor />
-          <ReviewPopup
-            open={showReviewPrompt || manualReviewOpen}
-            onReviewed={handleReviewed}
-            onClose={handleReviewClose}
-          />
+          {showReviewPrompt || manualReviewOpen ? (
+            <Suspense fallback={null}>
+              <ReviewPopup
+                open
+                onReviewed={handleReviewed}
+                onClose={handleReviewClose}
+              />
+            </Suspense>
+          ) : null}
         </div>
       )}
     </>
   )
 }
-
-

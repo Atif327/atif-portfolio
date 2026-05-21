@@ -1,14 +1,33 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 export default function Cursor(){
-  const [pos,setPos] = useState({x:-100,y:-100})
+  const cursorRef = useRef(null)
+  const frameRef = useRef(0)
+  const pointRef = useRef({ x: -100, y: -100 })
+
   useEffect(()=>{
-    const onMove = e => setPos({x:e.clientX,y:e.clientY})
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return undefined
+
+    const onMove = e => {
+      pointRef.current = { x: e.clientX, y: e.clientY }
+      if (frameRef.current) return
+
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = 0
+        if (cursorRef.current) {
+          cursorRef.current.style.left = `${pointRef.current.x}px`
+          cursorRef.current.style.top = `${pointRef.current.y}px`
+        }
+      })
+    }
+
     window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      if (frameRef.current) window.cancelAnimationFrame(frameRef.current)
+    }
   },[])
-  return (
-    <div className="cursor-glow" style={{left:pos.x, top:pos.y}} />
-  )
+
+  return <div ref={cursorRef} className="cursor-glow" style={{ left: -100, top: -100 }} />
 }
 

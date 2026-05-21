@@ -3,6 +3,7 @@ import { FaHome, FaUser, FaEnvelope, FaTimes, FaBars, FaBlog, FaNewspaper, FaUse
 import { FolderKanban } from 'lucide-react'
 import { getSocialIcon } from '../../admin/iconMaps'
 import { usePortfolioData } from '../../context/PortfolioDataContext'
+import { getOptimizedImageSrc } from '../../lib/imageAssets'
 
 function ServicesOutlineIcon(props) {
   return (
@@ -43,6 +44,7 @@ export default function Sidebar({ active, onNavigate }){
   // mobileNavState: 0 = full (profile + icons), 1 = icons only, 2 = hidden
   const [mobileNavState, setMobileNavState] = useState(0)
   const { settings, sortedSocialLinks } = usePortfolioData()
+  const profileImage = getOptimizedImageSrc(settings.logoImage || settings.profileImage || '/Atif logo.png')
   const profileSocials = sortedSocialLinks
     .filter((link) => link.isActive)
     .slice(0, 3)
@@ -76,7 +78,7 @@ export default function Sidebar({ active, onNavigate }){
       <aside className={`sidebar bg-sidebar p-6 border-r ${collapsed ? 'collapsed' : ''} ${isMobile && mobileNavState === 2 ? 'mobile-hidden' : ''}`}>
         {isMobile && mobileNavState === 0 && (
           <div className="mobile-header-card" role="banner">
-            <img src={settings.logoImage || settings.profileImage || '/Atif logo.png'} alt="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer" loading="lazy" decoding="async" className="mobile-profile-image" />
+            <img src={profileImage} alt="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer" width="44" height="44" loading="lazy" decoding="async" className="mobile-profile-image" />
             <div className="mobile-header-text">
               <h2>{settings.fullName || 'Atif Ayyoub'}</h2>
               <p>{settings.professionalTitle || 'AI Web & Custom Software Developer'}</p>
@@ -94,7 +96,7 @@ export default function Sidebar({ active, onNavigate }){
 
         <div className="flex flex-col items-center text-center profile-block">
           <div className="profile-circle rounded-full">
-            <img src={settings.logoImage || settings.profileImage || '/Atif logo.png'} alt="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer" loading="eager" decoding="async" className="profile-image" />
+            <img src={profileImage} alt="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer" width="120" height="120" loading="eager" decoding="async" className="profile-image" />
           </div>
           {!collapsed && !isMobile && (
             <>

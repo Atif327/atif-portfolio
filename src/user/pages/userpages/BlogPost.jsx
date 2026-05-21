@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import Seo from '../../../user/components/Seo'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
+import { getOptimizedImageSrc } from '../../../lib/imageAssets'
 import './blog.css'
 
 function splitCategories(value) {
@@ -95,7 +96,7 @@ function renderMarkdown(content) {
     if (block.type === 'img') {
       return (
         <figure key={`b-${index}`} className="blog-md-image-wrap">
-          <img src={block.src} alt={block.alt} title={block.title || undefined} className="blog-md-image" loading="lazy" decoding="async" />
+          <img src={getOptimizedImageSrc(block.src)} alt={block.alt} title={block.title || undefined} className="blog-md-image" loading="lazy" decoding="async" />
           {block.title ? <figcaption>{block.title}</figcaption> : null}
         </figure>
       )
@@ -162,13 +163,14 @@ export default function BlogPost() {
 
   const seoTitle = post.seoTitle || `${post.title} | Atif Ayyoub`
   const seoDescription = post.seoDescription || post.excerpt
+  const coverImage = getOptimizedImageSrc(post.coverImage || '/preview.png')
   const quickAnswer = extractQuickAnswer(post.content, post.excerpt)
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
     description: seoDescription,
-    image: [post.coverImage || '/preview.png'],
+    image: [coverImage],
     url: `https://atif-portfolio-nine.vercel.app/blog/${post.slug}`,
     datePublished: post.publishedAt || post.createdAt || post.updatedAt || new Date().toISOString(),
     dateModified: post.updatedAt || post.publishedAt || new Date().toISOString(),
@@ -189,7 +191,7 @@ export default function BlogPost() {
         title={seoTitle}
         description={seoDescription}
         pathname={`/blog/${post.slug}`}
-        image={post.coverImage || '/preview.png'}
+        image={coverImage}
         schema={articleSchema}
       />
 
@@ -213,7 +215,7 @@ export default function BlogPost() {
           <h1>{post.title}</h1>
           <p>{post.excerpt}</p>
           <div className="blog-post-cover-wrap">
-            <img src={post.coverImage || '/preview.png'} alt={`${post.title} cover`} className="blog-post-cover" />
+            <img src={coverImage} alt={`${post.title} cover`} className="blog-post-cover" width="900" height="520" loading="eager" fetchPriority="high" decoding="async" />
           </div>
         </header>
 

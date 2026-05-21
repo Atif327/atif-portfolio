@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Seo from '../../../user/components/Seo'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
 import { FaBookOpen, FaBrain, FaCode, FaMobileAlt, FaNodeJs, FaPalette, FaPlane, FaPython, FaReact } from 'react-icons/fa'
+import { getOptimizedImageSrc } from '../../../lib/imageAssets'
 import './about.css'
 
 const statItems = [
@@ -116,6 +117,7 @@ export default function About(){
   const { settings } = usePortfolioData()
   const bioParagraphs = getBioParagraphs(settings.aboutContent)
   const [countersStarted, setCountersStarted] = useState(false)
+  const heroImage = getOptimizedImageSrc(settings.heroImage || '/atif-ayyoub-ai-developer.png')
 
   return (
     <motion.div initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} transition={{duration:0.6}} className="about-v2">
@@ -147,7 +149,7 @@ export default function About(){
 
           <div className="about-v2__photo">
             <div className="about-v2__image-wrap">
-              <div className="about-v2__image-ring" style={{ backgroundImage: `url(${settings.heroImage || '/atif-ayyoub-ai-developer.png'})` }} role="img" aria-label="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer" />
+              <div className="about-v2__image-ring" style={{ backgroundImage: `url(${heroImage})` }} role="img" aria-label="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer" />
             </div>
           </div>
 

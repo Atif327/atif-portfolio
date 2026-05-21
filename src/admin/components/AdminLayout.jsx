@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { FaBars, FaBlog, FaCog, FaEnvelope, FaFolderOpen, FaGraduationCap, FaHome, FaSignOutAlt, FaStar, FaTools } from 'react-icons/fa'
 import { MdDashboard, MdOutlineTravelExplore } from 'react-icons/md'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import '../../styles/admin.css'
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: MdDashboard },

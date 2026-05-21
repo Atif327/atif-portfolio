@@ -12,7 +12,7 @@ export default function Seo({
   title,
   description,
   pathname = '/',
-  image = '/preview.png',
+  image = '/preview.webp',
   noindex = false,
   schema = null,
 }) {

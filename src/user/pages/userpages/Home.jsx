@@ -1,14 +1,58 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import TechStack from '../../../user/components/TechStack'
 import ThemeSwitcher from '../../../user/components/ThemeSwitcher'
 import Seo from '../../../user/components/Seo'
 import ReviewsSection, { toReviewSchema } from '../../../user/components/ReviewsSection'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
 import { fetchReviews } from '../../../services/reviewService'
 import { getSocialIcon } from '../../../admin/iconMaps'
+import { getOptimizedImageSrc } from '../../../lib/imageAssets'
 import './home.css'
+
+const LazyTechStack = React.lazy(() => import('../../../user/components/TechStack'))
+
+function DeferredTechStack() {
+  const containerRef = useRef(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    if (shouldLoad) return undefined
+
+    const node = containerRef.current
+    if (!node || !('IntersectionObserver' in window)) {
+      const timer = window.setTimeout(() => setShouldLoad(true), 0)
+      return () => window.clearTimeout(timer)
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoad(true)
+          observer.disconnect()
+        }
+      },
+      {
+        rootMargin: '480px 0px',
+        threshold: 0.01,
+      },
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [shouldLoad])
+
+  return (
+    <div ref={containerRef} className="home-v2__tech-deferred">
+      {shouldLoad ? (
+        <Suspense fallback={<div className="home-v2__tech-placeholder" aria-hidden="true" />}>
+          <LazyTechStack />
+        </Suspense>
+      ) : (
+        <div className="home-v2__tech-placeholder" aria-hidden="true" />
+      )}
+    </div>
+  )
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -18,6 +62,7 @@ export default function Home() {
   const [reviewsError, setReviewsError] = useState('')
 
   const publicSocialLinks = sortedSocialLinks.filter((link) => link.isActive)
+  const heroImage = getOptimizedImageSrc(settings.heroImage || '/atif-ayyoub-ai-developer.png')
   const normalizePlatform = (value) => String(value || '').toLowerCase().replace(/\s+/g, '').trim()
   const getSocialPriority = (value) => {
     const key = normalizePlatform(value)
@@ -30,58 +75,6 @@ export default function Home() {
     return undefined
   }
 
-  const testimonials = [
-    {
-      id: 't-1',
-      name: 'Client Feedback',
-      role: 'Startup Founder',
-      text: 'Atif delivered a clean and high-performing product with strong communication throughout the project.',
-    },
-    {
-      id: 't-2',
-      name: 'Client Feedback',
-      role: 'Product Manager',
-      text: 'The UI quality and responsiveness exceeded expectations, and the final delivery was polished and reliable.',
-    },
-    {
-      id: 't-3',
-      name: 'Client Feedback',
-      role: 'Business Owner',
-      text: 'Great technical depth and modern design sense. The workflow was smooth from planning to handover.',
-    },
-    {
-      id: 't-4',
-      name: 'Client Feedback',
-      role: 'CTO, SaaS Platform',
-      text: 'Excellent architecture decisions and strong ownership from kickoff to launch. Performance stayed stable even under heavy load.',
-    },
-    {
-      id: 't-5',
-      name: 'Client Feedback',
-      role: 'E-commerce Lead',
-      text: 'Our conversion flow became faster and cleaner after the redesign. Delivery was timely and communication was always clear.',
-    },
-    {
-      id: 't-6',
-      name: 'Client Feedback',
-      role: 'Marketing Director',
-      text: 'The final product looked premium, loaded quickly, and matched our brand perfectly. We appreciated the proactive suggestions.',
-    },
-    {
-      id: 't-7',
-      name: 'Client Feedback',
-      role: 'Operations Manager',
-      text: 'Reliable execution and smooth handover. Documentation and post-delivery support made onboarding our team very easy.',
-    },
-    {
-      id: 't-8',
-      name: 'Client Feedback',
-      role: 'Agency Partner',
-      text: 'Great balance of design quality and engineering discipline. Every milestone was delivered with impressive consistency.',
-    },
-  ]
-
-  const marqueeTestimonials = [...testimonials, ...testimonials]
   const followMeLinks = publicSocialLinks
     .filter((link) => getSocialPriority(link.platform) !== undefined)
     .sort((a, b) => {
@@ -110,10 +103,13 @@ export default function Home() {
       }
     }
 
-    loadReviews()
+    const runWhenIdle = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 2800))
+    const cancelIdle = window.cancelIdleCallback || window.clearTimeout
+    const idleId = runWhenIdle(loadReviews, { timeout: 4500 })
 
     return () => {
       mounted = false
+      cancelIdle(idleId)
     }
   }, [])
 
@@ -123,12 +119,7 @@ export default function Home() {
   }, [approvedReviews])
 
   return (
-    <motion.section
-      className="home-v2"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45 }}
-    >
+    <section className="home-v2">
       <Seo
         title="Atif Ayyoub | AI Web & Custom Software Developer"
         description="Portfolio of Atif Ayyoub, an AI Web & Custom Software Developer building scalable web apps, dashboards, APIs, and custom software solutions."
@@ -136,8 +127,6 @@ export default function Home() {
         schema={reviewSchema}
       />
       <div className="home-v2__container">
-        <ThemeSwitcher />
-
         <section className="home-v2__hero card-shell">
           <div className="home-v2__hero-content">
             <p className="home-v2__intro">Hi, I&apos;m {settings.fullName || 'Atif Ayyoub'}</p>
@@ -160,15 +149,21 @@ export default function Home() {
           <div className="home-v2__hero-image-wrap">
             <div className="home-v2__hero-image-shell" aria-hidden="true" />
             <div className="home-v2__hero-image-ring">
-              <div
+              <img
                 className="home-v2__hero-image"
-                style={{ backgroundImage: `url(${settings.heroImage || '/atif-ayyoub-ai-developer.png'})` }}
-                role="img"
-                aria-label="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer"
+                src={heroImage}
+                alt="Hi, I'm Atif Ayyoub, an AI Web & Custom Software Developer"
+                width="320"
+                height="320"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
           </div>
         </section>
+
+        <ThemeSwitcher />
 
         <section className="home-v2__section">
           <div className="home-v2__info-grid">
@@ -201,7 +196,7 @@ export default function Home() {
         <section className="home-v2__section">
           <h2 className="home-v2__section-title">Technologies I Work With</h2>
           <div className="home-v2__tech-wrap card-shell">
-            <TechStack />
+            <DeferredTechStack />
           </div>
         </section>
 
@@ -222,7 +217,7 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </motion.section>
+    </section>
   )
 }
 

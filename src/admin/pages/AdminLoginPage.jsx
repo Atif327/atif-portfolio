@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import '../../styles/admin.css'
 
 export default function AdminLoginPage() {
   const { isAuthenticated, login } = useAdminAuth()

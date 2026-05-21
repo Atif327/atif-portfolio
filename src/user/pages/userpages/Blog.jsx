@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Seo from '../../../user/components/Seo'
 import { BLOG_CATEGORY_OPTIONS } from '../../../admin/seedData'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
+import { getOptimizedImageSrc } from '../../../lib/imageAssets'
 import './blog.css'
 import Pagination from '../../../user/components/Pagination'
 
@@ -81,8 +82,10 @@ export default function Blog() {
             <article key={post.id} className="blog-card card-shell">
               <div className="blog-card__image-wrap">
                 <img
-                  src={post.coverImage || '/preview.png'}
+                  src={getOptimizedImageSrc(post.coverImage || '/preview.png')}
                   alt={`${post.title} cover`}
+                  width="900"
+                  height="520"
                   loading="lazy"
                   decoding="async"
                   className="blog-card__image"

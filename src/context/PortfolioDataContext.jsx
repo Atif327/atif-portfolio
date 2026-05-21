@@ -8,7 +8,6 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_SOCIAL_LINKS,
 } from '../admin/seedData'
-import { supabase } from '../lib/supabaseClient'
 
 const STORAGE_KEYS = {
   services: 'portfolio_services_v1',
@@ -21,6 +20,47 @@ const STORAGE_KEYS = {
 }
 
 const PortfolioDataContext = createContext(null)
+let supabaseClientPromise = null
+
+function requestIdleTask(callback, delay = 3200) {
+  if (typeof window === 'undefined') return null
+
+  if ('requestIdleCallback' in window) {
+    return {
+      type: 'idle',
+      id: window.requestIdleCallback(callback, { timeout: delay + 1800 }),
+    }
+  }
+
+  return {
+    type: 'timeout',
+    id: window.setTimeout(callback, delay),
+  }
+}
+
+function cancelIdleTask(task) {
+  if (!task || typeof window === 'undefined') return
+
+  if (task.type === 'idle' && 'cancelIdleCallback' in window) {
+    window.cancelIdleCallback(task.id)
+    return
+  }
+
+  window.clearTimeout(task.id)
+}
+
+function loadSupabaseClient() {
+  if (!supabaseClientPromise) {
+    supabaseClientPromise = import('../lib/supabaseClient')
+      .then((module) => module.supabase || module.default || null)
+      .catch((error) => {
+        console.warn('Unable to load Supabase client. Falling back to local portfolio data.', error)
+        return null
+      })
+  }
+
+  return supabaseClientPromise
+}
 
 function parseStoredValue(key, fallback) {
   try {
@@ -94,6 +134,8 @@ export function PortfolioDataProvider({ children }) {
   const [messages, setMessages] = useState(() => parseStoredValue(STORAGE_KEYS.messages, DEFAULT_MESSAGES))
   const [blogs, setBlogs] = useState(() => parseStoredValue(STORAGE_KEYS.blogs, DEFAULT_BLOG_POSTS))
   const [education, setEducation] = useState(() => parseStoredValue(STORAGE_KEYS.education, DEFAULT_EDUCATION))
+  const [supabaseClient, setSupabaseClient] = useState(null)
+  const supabase = supabaseClient
   const hasSupabase = Boolean(supabase && typeof supabase.from === 'function')
   const servicesRef = useRef(services)
   const projectsRef = useRef(projects)
@@ -130,6 +172,29 @@ export function PortfolioDataProvider({ children }) {
   useEffect(() => {
     educationRef.current = education
   }, [education])
+
+  useEffect(() => {
+    let isCancelled = false
+
+    const importClient = async () => {
+      const client = await loadSupabaseClient()
+      if (!isCancelled && client && typeof client.from === 'function') {
+        setSupabaseClient(client)
+      }
+    }
+
+    const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
+    const task = isAdminPath ? null : requestIdleTask(importClient)
+
+    if (isAdminPath) {
+      importClient()
+    }
+
+    return () => {
+      isCancelled = true
+      cancelIdleTask(task)
+    }
+  }, [])
 
   const persist = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value))
@@ -353,7 +418,7 @@ export function PortfolioDataProvider({ children }) {
     const mappedMessages = Array.isArray(data) ? data.map(mapDbMessageToApp) : []
     setMessages(mappedMessages)
     persist(STORAGE_KEYS.messages, mappedMessages)
-  }, [hasSupabase])
+  }, [hasSupabase, supabase])
 
   useEffect(() => {
     if (!hasSupabase) return
@@ -501,7 +566,7 @@ export function PortfolioDataProvider({ children }) {
     return () => {
       isCancelled = true
     }
-  }, [hasSupabase])
+  }, [hasSupabase, supabase])
 
   const upsertService = async (service, id) => {
     const now = new Date().toISOString()
@@ -983,6 +1048,8 @@ export function PortfolioDataProvider({ children }) {
       resetAllData,
     }),
     [
+      addMessage,
+      deleteEducation,
       deleteMessage,
       deleteBlog,
       deleteProject,
@@ -1002,6 +1069,7 @@ export function PortfolioDataProvider({ children }) {
       sortedProjects,
       sortedServices,
       sortedSocialLinks,
+      resetAllData,
       updateMessageStatus,
       updateSettings,
       upsertBlog,

@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Github } from 'lucide-react'
+import { getOptimizedImageSrc } from '../../lib/imageAssets'
 
 function slugify(value) {
   return String(value || '')
@@ -21,6 +22,7 @@ function normalizeTags(tags) {
 export default function ProjectCard({ project }) {
   const caseStudySlug = slugify(project.title)
   const tags = normalizeTags(project.tags).slice(0, 5)
+  const imageSrc = getOptimizedImageSrc(project.image)
 
   return (
     <motion.article
@@ -32,11 +34,13 @@ export default function ProjectCard({ project }) {
       whileHover={{ y: -6 }}
     >
       <div className="pcard__media">
-        {project.image ? (
+        {imageSrc ? (
           <img
-            src={project.image}
+            src={imageSrc}
             alt={`${project.title} preview`}
             className="pcard__image"
+            width="900"
+            height="600"
             loading="lazy"
             decoding="async"
           />

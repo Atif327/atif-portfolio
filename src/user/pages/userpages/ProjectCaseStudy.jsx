@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowUpRight, Github } from 'lucide-react'
 import Seo from '../../../user/components/Seo'
 import { usePortfolioData } from '../../../context/PortfolioDataContext'
+import { getOptimizedImageSrc } from '../../../lib/imageAssets'
 import './projectCaseStudy.css'
 
 export default function ProjectCaseStudy() {
@@ -20,6 +21,7 @@ export default function ProjectCaseStudy() {
   const title = `${project.title} | Case Study`
   const description = project.shortDescription || project.fullDescription || `Case study for ${project.title}`
   const technologies = Array.isArray(project.technologies) ? project.technologies.filter(Boolean) : []
+  const previewImage = getOptimizedImageSrc(project.thumbnail || '/preview.png')
 
   const sectionAnimation = {
     initial: { opacity: 0, y: 28 },
@@ -30,7 +32,7 @@ export default function ProjectCaseStudy() {
 
   return (
     <section className="case-study-shell">
-      <Seo title={title} description={description} pathname={`/projects/${slug}`} image={project.thumbnail || '/preview.png'} />
+      <Seo title={title} description={description} pathname={`/projects/${slug}`} image={previewImage} />
 
       <div className="case-study-wrap">
         <motion.header className="case-hero" {...sectionAnimation}>
@@ -85,7 +87,7 @@ export default function ProjectCaseStudy() {
         </motion.section>
 
         <motion.figure className="case-preview" {...sectionAnimation}>
-          <img src={project.thumbnail || '/preview.png'} alt={`${project.title} preview`} className="case-preview-image" />
+          <img src={previewImage} alt={`${project.title} preview`} className="case-preview-image" width="900" height="600" loading="eager" fetchPriority="high" decoding="async" />
         </motion.figure>
 
         <motion.section className="case-content" {...sectionAnimation}>
